@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS clients (
     contact_person VARCHAR(255) NOT NULL,
     contact_email VARCHAR(255) NOT NULL,
     contact_phone VARCHAR(50),
-    address TEXT,
     time_tracking_method VARCHAR(20) NOT NULL DEFAULT 'detailed' CHECK (time_tracking_method IN ('detailed', 'simple')),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

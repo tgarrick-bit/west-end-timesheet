@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove standalone output to fix JavaScript loading issues
-  // output: 'standalone',
+  // output: 'standalone', // Temporarily disabled to fix build issues
+  // trailingSlash: true, // Temporarily disabled to fix routing
   images: {
     unoptimized: true
   }
 }
 
-export default nextConfig
+module.exports = nextConfig

@@ -10,7 +10,6 @@ import {
   Building2, 
   Mail, 
   Phone, 
-  MapPin,
   CheckCircle,
   XCircle,
   X
@@ -23,9 +22,7 @@ interface ClientFormData {
   contact_person: string
   contact_email: string
   contact_phone: string
-  address: string
   time_tracking_method: 'detailed' | 'simple'
-  billing_details: string
   is_active: boolean
 }
 
@@ -41,11 +38,11 @@ export default function ClientManagement() {
     contact_person: '',
     contact_email: '',
     contact_phone: '',
-    address: '',
     time_tracking_method: 'detailed',
-    billing_details: '',
     is_active: true
   })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchClients()
@@ -54,7 +51,15 @@ export default function ClientManagement() {
   const fetchClients = async () => {
     try {
       setLoading(true)
+      setError(null)
       console.log('🔍 Fetching clients from database...')
+      
+      // Check if Supabase is properly configured
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        console.warn('⚠️ Supabase environment variables not configured, using demo data')
+        loadDemoClients()
+        return
+      }
       
       const { data, error } = await supabase
         .from('clients')
@@ -63,63 +68,188 @@ export default function ClientManagement() {
 
       if (error) {
         console.error('❌ Supabase error:', error)
-        throw error
+        setError(`Database error: ${error.message}`)
+        // Fallback to demo data
+        loadDemoClients()
+        return
       }
       
-      console.log('✅ Clients fetched successfully:', data?.length || 0, 'clients')
+      console.log('✅ Clients fetched successfully from database:', data?.length || 0, 'clients')
       setClients(data || [])
     } catch (error) {
       console.error('❌ Error fetching clients:', error)
-      // Set empty array to prevent infinite loading
-      setClients([])
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      setError(`Failed to fetch clients: ${errorMessage}`)
+      loadDemoClients()
     } finally {
       setLoading(false)
     }
   }
 
+  const loadDemoClients = () => {
+    const demoClients = [
+      {
+        id: 'demo-1',
+        name: 'Metro Hospital',
+        contact_person: 'Sarah Johnson',
+        contact_email: 'hr@metrohospital.com',
+        contact_phone: '+1-555-0101',
+        time_tracking_method: 'detailed' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-2',
+        name: 'Downtown Office',
+        contact_person: 'Mike Chen',
+        contact_email: 'admin@downtownoffice.com',
+        contact_phone: '+1-555-0102',
+        time_tracking_method: 'simple' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-3',
+        name: 'City Schools',
+        contact_person: 'Lisa Rodriguez',
+        contact_email: 'hr@cityschools.edu',
+        contact_phone: '+1-555-0103',
+        time_tracking_method: 'detailed' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-4',
+        name: 'Riverside Manufacturing',
+        contact_person: 'David Thompson',
+        contact_email: 'operations@riversidemfg.com',
+        contact_phone: '+1-555-0104',
+        time_tracking_method: 'simple' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'demo-5',
+        name: 'Tech Consulting',
+        contact_person: 'Alex Kim',
+        contact_email: 'projects@techconsulting.com',
+        contact_phone: '+1-555-0105',
+        time_tracking_method: 'detailed' as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ]
+    
+    setClients(demoClients)
+    console.log('✅ Demo clients loaded:', demoClients.length, 'clients')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSaving(true)
+    setError(null)
     
     try {
       if (editingClient) {
         // Update existing client
-        const { error } = await supabase
-          .from('clients')
-          .update({
-            name: formData.name,
-            contact_person: formData.contact_person,
-            contact_email: formData.contact_email,
-            contact_phone: formData.contact_phone,
-            address: formData.address,
-            time_tracking_method: formData.time_tracking_method,
-            is_active: formData.is_active,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingClient.id)
+        if (editingClient.id.startsWith('demo-')) {
+          // Update demo client in local state
+          setClients(prev => prev.map(client => 
+            client.id === editingClient.id 
+              ? { ...client, ...formData, updated_at: new Date().toISOString() }
+              : client
+          ))
+          console.log('✅ Demo client updated successfully')
+        } else {
+          // Update in database
+          // Check if Supabase is properly configured
+          if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+            console.warn('⚠️ Supabase not configured, updating demo client')
+            setClients(prev => prev.map(client => 
+              client.id === editingClient.id 
+                ? { ...client, ...formData, updated_at: new Date().toISOString() }
+                : client
+            ))
+            console.log('✅ Demo client updated successfully')
+          } else {
+            const { error } = await supabase
+              .from('clients')
+              .update({
+                name: formData.name,
+                contact_person: formData.contact_person,
+                contact_email: formData.contact_email,
+                contact_phone: formData.contact_phone,
+                time_tracking_method: formData.time_tracking_method,
+                is_active: formData.is_active,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', editingClient.id)
 
-        if (error) throw error
+            if (error) {
+              console.error('❌ Database update error:', error)
+              throw new Error(error.message)
+            }
+            console.log('✅ Client updated in database successfully')
+            
+            // Refresh the clients list
+            await fetchClients()
+          }
+        }
       } else {
         // Create new client
-        const { error } = await supabase
-          .from('clients')
-          .insert([{
-            name: formData.name,
-            contact_person: formData.contact_person,
-            contact_email: formData.contact_email,
-            contact_phone: formData.contact_phone,
-            address: formData.address,
-            time_tracking_method: formData.time_tracking_method,
-            is_active: formData.is_active
-          }])
+        const newClientData = {
+          name: formData.name,
+          contact_person: formData.contact_person,
+          contact_email: formData.contact_email,
+          contact_phone: formData.contact_phone,
+          time_tracking_method: formData.time_tracking_method,
+          is_active: formData.is_active
+        }
+        
+        console.log('🚀 Attempting to create client:', newClientData)
+        
+        // Check if Supabase is properly configured
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          console.warn('⚠️ Supabase not configured, creating demo client')
+          const demoClient = {
+            id: `demo-${Date.now()}`,
+            ...newClientData,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+          setClients(prev => [...prev, demoClient])
+          console.log('✅ Demo client created successfully')
+        } else {
+          const { data, error } = await supabase
+            .from('clients')
+            .insert([newClientData])
+            .select()
 
-        if (error) throw error
+          if (error) {
+            console.error('❌ Database creation failed:', error)
+            throw new Error(error.message)
+          }
+          
+          console.log('✅ Client created in database successfully:', data)
+          
+          // Refresh the clients list
+          await fetchClients()
+        }
       }
 
-      // Reset form and refresh data
+      // Reset form
       resetForm()
-      fetchClients()
-    } catch (error) {
-      console.error('Error saving client:', error)
+    } catch (error: unknown) {
+      console.error('❌ Error saving client:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      setError(`Failed to save client: ${errorMessage}`)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -130,9 +260,7 @@ export default function ClientManagement() {
       contact_person: client.contact_person || '',
       contact_email: client.contact_email,
       contact_phone: client.contact_phone || '',
-      address: client.address || '',
       time_tracking_method: client.time_tracking_method,
-      billing_details: '',
       is_active: client.is_active
     })
     setShowForm(true)
@@ -142,15 +270,37 @@ export default function ClientManagement() {
     if (!confirm('Are you sure you want to delete this client?')) return
 
     try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId)
+      if (clientId.startsWith('demo-')) {
+        // Delete demo client from local state
+        setClients(prev => prev.filter(client => client.id !== clientId))
+        console.log('✅ Demo client deleted successfully')
+      } else {
+        // Delete from database
+        // Check if Supabase is properly configured
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          console.warn('⚠️ Supabase not configured, deleting demo client')
+          setClients(prev => prev.filter(client => client.id !== clientId))
+          console.log('✅ Demo client deleted successfully')
+        } else {
+          const { error } = await supabase
+            .from('clients')
+            .delete()
+            .eq('id', clientId)
 
-      if (error) throw error
-      fetchClients()
-    } catch (error) {
-      console.error('Error deleting client:', error)
+          if (error) {
+            console.error('❌ Database delete error:', error)
+            throw new Error(error.message)
+          }
+          console.log('✅ Client deleted from database successfully')
+          
+          // Refresh the clients list
+          await fetchClients()
+        }
+      }
+    } catch (error: unknown) {
+      console.error('❌ Error deleting client:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      setError(`Failed to delete client: ${errorMessage}`)
     }
   }
 
@@ -160,13 +310,12 @@ export default function ClientManagement() {
       contact_person: '',
       contact_email: '',
       contact_phone: '',
-      address: '',
       time_tracking_method: 'detailed',
-      billing_details: '',
       is_active: true
     })
     setEditingClient(null)
     setShowForm(false)
+    setError(null)
   }
 
   const filteredClients = clients.filter(client => {
@@ -196,13 +345,33 @@ export default function ClientManagement() {
           <p className="text-[#465079]">Manage your client relationships and information</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            console.log('Add Client button clicked!')
+            console.log('Current showForm state:', showForm)
+            setShowForm(true)
+            console.log('Setting showForm to true')
+          }}
           className="flex items-center px-4 py-2 bg-[#e31c79] text-white rounded-lg hover:bg-[#d4156a] transition-colors"
         >
           <Plus className="h-5 w-5 mr-2" />
           Add Client
         </button>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <XCircle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -310,31 +479,6 @@ export default function ClientManagement() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#232020] mb-2">
-                Address
-              </label>
-              <textarea
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[#232020] mb-2">
-                Billing Details
-              </label>
-              <textarea
-                value={formData.billing_details}
-                onChange={(e) => setFormData({ ...formData, billing_details: e.target.value })}
-                rows={3}
-                placeholder="Payment terms, billing address, tax information..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent"
-              />
-            </div>
-
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -352,14 +496,19 @@ export default function ClientManagement() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-4 py-2 text-[#465079] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={saving}
+                className="px-4 py-2 text-[#465079] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-[#e31c79] text-white rounded-lg hover:bg-[#d4156a] transition-colors"
+                disabled={saving}
+                className="px-6 py-2 bg-[#e31c79] text-white rounded-lg hover:bg-[#d4156a] transition-colors disabled:opacity-50 flex items-center"
               >
+                {saving && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
                 {editingClient ? 'Update Client' : 'Create Client'}
               </button>
             </div>
@@ -398,12 +547,6 @@ export default function ClientManagement() {
                           <span className="flex items-center">
                             <Phone className="h-4 w-4 mr-1" />
                             {client.contact_phone}
-                          </span>
-                        )}
-                        {client.address && (
-                          <span className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {client.address}
                           </span>
                         )}
                       </div>

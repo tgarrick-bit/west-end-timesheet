@@ -28,6 +28,7 @@ import SystemReports from './SystemReports'
 import AdminTimesheetManagement from './AdminTimesheetManagement'
 import AdminExpenseManagement from './AdminExpenseManagement'
 import AdminSettings from './AdminSettings'
+import DatabaseTest from './DatabaseTest'
 
 
 interface AdminDashboardProps {
@@ -555,7 +556,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {activeSection === 'reports' && <SystemReports />}
           {activeSection === 'timesheets' && <AdminTimesheetManagement />}
           {activeSection === 'expenses' && <AdminExpenseManagement />}
-          {activeSection === 'settings' && <AdminSettings />}
+          {activeSection === 'settings' && (
+            <div className="space-y-6">
+              <AdminSettings />
+              <DatabaseTest />
+            </div>
+          )}
 
           
           {/* Other sections placeholder */}

@@ -1,14 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const router = useRouter()
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
-    router.replace('/auth/signin')
-  }, [router])
+    if (!isRedirecting) {
+      setIsRedirecting(true)
+      router.replace('/auth/signin')
+    }
+  }, [router, isRedirecting])
 
   return (
     <div className="min-h-screen bg-[#05202E] flex items-center justify-center">
@@ -17,6 +21,7 @@ export default function HomePage() {
           <span className="text-white font-bold text-xl">WE</span>
         </div>
         <p className="text-white">Loading West End Workforce...</p>
+        <p className="text-white text-sm mt-2">Redirecting to sign in...</p>
       </div>
     </div>
   )

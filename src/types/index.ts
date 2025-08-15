@@ -18,7 +18,6 @@ export interface Client {
   contact_person: string
   contact_email: string
   contact_phone?: string
-  address?: string
   time_tracking_method: 'detailed' | 'simple'
   is_active: boolean
   created_at: string

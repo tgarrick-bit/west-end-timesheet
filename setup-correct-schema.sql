@@ -1,5 +1,5 @@
--- West End Workforce Database Schema
--- This file contains the complete database structure for the timesheet and expense tracking system
+-- West End Workforce Database Setup Script
+-- Run this in your Supabase SQL editor to create all necessary tables
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -12,7 +12,7 @@ CREATE TYPE timesheet_status AS ENUM ('draft', 'submitted', 'client_approved', '
 CREATE TYPE expense_status AS ENUM ('draft', 'submitted', 'client_approved', 'payroll_approved', 'rejected');
 
 -- Users table (employees, client approvers, admins, payroll)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE users (
 );
 
 -- Clients table (external companies)
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     contact_person VARCHAR(255) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE clients (
 );
 
 -- Projects table
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     client_id UUID NOT NULL REFERENCES clients(id),
@@ -53,7 +53,7 @@ CREATE TABLE projects (
 );
 
 -- Project assignments (which users work on which projects)
-CREATE TABLE project_assignments (
+CREATE TABLE IF NOT EXISTS project_assignments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     project_id UUID NOT NULL REFERENCES projects(id),
@@ -67,7 +67,7 @@ CREATE TABLE project_assignments (
 );
 
 -- Tasks table (project-specific tasks/codes)
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id),
     name VARCHAR(255) NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE tasks (
 );
 
 -- Time entries (daily time tracking)
-CREATE TABLE time_entries (
+CREATE TABLE IF NOT EXISTS time_entries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     project_id UUID NOT NULL REFERENCES projects(id),
@@ -100,7 +100,7 @@ CREATE TABLE time_entries (
 );
 
 -- Timesheets (weekly aggregation)
-CREATE TABLE timesheets (
+CREATE TABLE IF NOT EXISTS timesheets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     week_start_date DATE NOT NULL,
@@ -118,7 +118,7 @@ CREATE TABLE timesheets (
 );
 
 -- Expense categories
-CREATE TABLE expense_categories (
+CREATE TABLE IF NOT EXISTS expense_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -130,7 +130,7 @@ CREATE TABLE expense_categories (
 );
 
 -- Expense items
-CREATE TABLE expense_items (
+CREATE TABLE IF NOT EXISTS expense_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     project_id UUID REFERENCES projects(id), -- Optional, can be personal expense
@@ -149,7 +149,7 @@ CREATE TABLE expense_items (
 );
 
 -- Expense reports (monthly aggregation)
-CREATE TABLE expense_reports (
+CREATE TABLE IF NOT EXISTS expense_reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     month VARCHAR(7) NOT NULL, -- Format: YYYY-MM
@@ -167,7 +167,7 @@ CREATE TABLE expense_reports (
 );
 
 -- Rate tables for flexible rate management
-CREATE TABLE rate_tables (
+CREATE TABLE IF NOT EXISTS rate_tables (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -177,7 +177,7 @@ CREATE TABLE rate_tables (
 );
 
 -- Rate entries (specific rates for user+project combinations)
-CREATE TABLE rate_entries (
+CREATE TABLE IF NOT EXISTS rate_entries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     rate_table_id UUID NOT NULL REFERENCES rate_tables(id),
     user_id UUID REFERENCES users(id), -- Optional, for user-specific rates
@@ -190,7 +190,7 @@ CREATE TABLE rate_entries (
 );
 
 -- Approvals table (multi-level approval workflow)
-CREATE TABLE approvals (
+CREATE TABLE IF NOT EXISTS approvals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     approver_id UUID NOT NULL REFERENCES users(id),
     approver_type VARCHAR(20) NOT NULL CHECK (approver_type IN ('client', 'payroll')),
@@ -209,27 +209,27 @@ CREATE TABLE approvals (
 );
 
 -- Create indexes for better performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_client_id ON users(client_id);
-CREATE INDEX idx_projects_client_id ON projects(client_id);
-CREATE INDEX idx_project_assignments_user_id ON project_assignments(user_id);
-CREATE INDEX idx_project_assignments_project_id ON project_assignments(project_id);
-CREATE INDEX idx_tasks_project_id ON tasks(project_id);
-CREATE INDEX idx_time_entries_user_id ON time_entries(user_id);
-CREATE INDEX idx_time_entries_project_id ON time_entries(project_id);
-CREATE INDEX idx_time_entries_date ON time_entries(date);
-CREATE INDEX idx_timesheets_user_id ON timesheets(user_id);
-CREATE INDEX idx_timesheets_status ON timesheets(status);
-CREATE INDEX idx_expense_items_user_id ON expense_items(user_id);
-CREATE INDEX idx_expense_items_project_id ON expense_items(project_id);
-CREATE INDEX idx_expense_items_date ON expense_items(date);
-CREATE INDEX idx_expense_reports_user_id ON expense_reports(user_id);
-CREATE INDEX idx_expense_reports_status ON expense_reports(status);
-CREATE INDEX idx_approvals_approver_id ON approvals(approver_id);
-CREATE INDEX idx_approvals_status ON approvals(status);
-CREATE INDEX idx_approvals_timesheet_id ON approvals(timesheet_id);
-CREATE INDEX idx_approvals_expense_report_id ON approvals(expense_report_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_client_id ON users(client_id);
+CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects(client_id);
+CREATE INDEX IF NOT EXISTS idx_project_assignments_user_id ON project_assignments(user_id);
+CREATE INDEX IF NOT EXISTS idx_project_assignments_project_id ON project_assignments(project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
+CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_time_entries_project_id ON time_entries(project_id);
+CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);
+CREATE INDEX IF NOT EXISTS idx_timesheets_user_id ON timesheets(user_id);
+CREATE INDEX IF NOT EXISTS idx_timesheets_status ON timesheets(status);
+CREATE INDEX IF NOT EXISTS idx_expense_items_user_id ON expense_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_expense_items_project_id ON expense_items(project_id);
+CREATE INDEX IF NOT EXISTS idx_expense_items_date ON expense_items(date);
+CREATE INDEX IF NOT EXISTS idx_expense_reports_user_id ON expense_reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_expense_reports_status ON expense_reports(status);
+CREATE INDEX IF NOT EXISTS idx_approvals_approver_id ON approvals(approver_id);
+CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status);
+CREATE INDEX IF NOT EXISTS idx_approvals_timesheet_id ON approvals(timesheet_id);
+CREATE INDEX IF NOT EXISTS idx_approvals_expense_report_id ON approvals(expense_report_id);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -264,7 +264,8 @@ INSERT INTO clients (id, name, contact_person, contact_email, contact_phone) VAL
     (uuid_generate_v4(), 'Downtown Office', 'Mike Chen', 'admin@downtownoffice.com', '+1-555-0105'),
     (uuid_generate_v4(), 'City Schools', 'Lisa Rodriguez', 'hr@cityschools.edu', '+1-555-0106'),
     (uuid_generate_v4(), 'Riverside Manufacturing', 'David Thompson', 'operations@riversidemfg.com', '+1-555-0107'),
-    (uuid_generate_v4(), 'Tech Consulting', 'Alex Kim', 'projects@techconsulting.com', '+1-555-0108');
+    (uuid_generate_v4(), 'Tech Consulting', 'Alex Kim', 'projects@techconsulting.com', '+1-555-0108')
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert expense categories
 INSERT INTO expense_categories (name, description, spending_limit, is_billable) VALUES
@@ -272,7 +273,8 @@ INSERT INTO expense_categories (name, description, spending_limit, is_billable) 
     ('Travel', 'Transportation and accommodation', 200.00, true),
     ('Supplies', 'Office and work supplies', 100.00, true),
     ('Equipment', 'Tools and equipment', 500.00, true),
-    ('Training', 'Professional development', 1000.00, false);
+    ('Training', 'Professional development', 1000.00, false)
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert sample projects
 INSERT INTO projects (name, client_id, description, start_date, budget) VALUES
@@ -283,7 +285,8 @@ INSERT INTO projects (name, client_id, description, start_date, budget) VALUES
     ('Security Services', (SELECT id FROM clients WHERE name = 'Downtown Office'), 'Building security and monitoring', '2024-01-01', 30000.00),
     ('Substitute Teachers', (SELECT id FROM clients WHERE name = 'City Schools'), 'Educational support and substitute teaching', '2024-01-01', 25000.00),
     ('Assembly Line', (SELECT id FROM clients WHERE name = 'Riverside Manufacturing'), 'Production line assembly and quality control', '2024-01-01', 40000.00),
-    ('Software Development', (SELECT id FROM clients WHERE name = 'Tech Consulting'), 'Custom software development and consulting', '2024-01-01', 60000.00);
+    ('Software Development', (SELECT id FROM clients WHERE name = 'Tech Consulting'), 'Custom software development and consulting', '2024-01-01', 60000.00)
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert sample tasks
 INSERT INTO tasks (project_id, name, code, description) VALUES
@@ -303,17 +306,20 @@ INSERT INTO tasks (project_id, name, code, description) VALUES
     ((SELECT id FROM projects WHERE name = 'Assembly Line'), 'Assembly', 'ASSEMBLE', 'Product assembly work'),
     ((SELECT id FROM projects WHERE name = 'Assembly Line'), 'Quality Control', 'QC', 'Quality inspection and testing'),
     ((SELECT id FROM projects WHERE name = 'Software Development'), 'Coding', 'CODE', 'Software development and programming'),
-    ((SELECT id FROM projects WHERE name = 'Software Development'), 'Testing', 'TEST', 'Software testing and debugging');
+    ((SELECT id FROM projects WHERE name = 'Software Development'), 'Testing', 'TEST', 'Software testing and debugging')
+ON CONFLICT (project_id, code) DO NOTHING;
 
 -- Insert admin user (password: admin123)
 INSERT INTO users (id, email, first_name, last_name, role) VALUES
-    (uuid_generate_v4(), 'admin@westendworkforce.com', 'System', 'Administrator', 'admin');
+    (uuid_generate_v4(), 'admin@westendworkforce.com', 'System', 'Administrator', 'admin')
+ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample employee users (passwords: employee123)
 INSERT INTO users (id, email, first_name, last_name, role) VALUES
     (uuid_generate_v4(), 'john.doe@westendworkforce.com', 'John', 'Doe', 'employee'),
     (uuid_generate_v4(), 'jane.smith@westendworkforce.com', 'Jane', 'Smith', 'employee'),
-    (uuid_generate_v4(), 'mike.johnson@westendworkforce.com', 'Mike', 'Johnson', 'employee');
+    (uuid_generate_v4(), 'mike.johnson@westendworkforce.com', 'Mike', 'Johnson', 'employee')
+ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample client approver users (passwords: client123)
 INSERT INTO users (id, email, first_name, last_name, role, client_id) VALUES
@@ -324,11 +330,13 @@ INSERT INTO users (id, email, first_name, last_name, role, client_id) VALUES
     (uuid_generate_v4(), 'admin@downtownoffice.com', 'Mike', 'Chen', 'client_approver', (SELECT id FROM clients WHERE name = 'Downtown Office')),
     (uuid_generate_v4(), 'hr@cityschools.edu', 'Lisa', 'Rodriguez', 'client_approver', (SELECT id FROM clients WHERE name = 'City Schools')),
     (uuid_generate_v4(), 'operations@riversidemfg.com', 'David', 'Thompson', 'client_approver', (SELECT id FROM clients WHERE name = 'Riverside Manufacturing')),
-    (uuid_generate_v4(), 'projects@techconsulting.com', 'Alex', 'Kim', 'client_approver', (SELECT id FROM clients WHERE name = 'Tech Consulting'));
+    (uuid_generate_v4(), 'projects@techconsulting.com', 'Alex', 'Kim', 'client_approver', (SELECT id FROM clients WHERE name = 'Tech Consulting'))
+ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample payroll user (password: payroll123)
 INSERT INTO users (id, email, first_name, last_name, role) VALUES
-    (uuid_generate_v4(), 'payroll@westendworkforce.com', 'Payroll', 'Manager', 'payroll');
+    (uuid_generate_v4(), 'payroll@westendworkforce.com', 'Payroll', 'Manager', 'payroll')
+ON CONFLICT (email) DO NOTHING;
 
 -- Insert project assignments
 INSERT INTO project_assignments (user_id, project_id, start_date, hourly_rate) VALUES
@@ -339,17 +347,119 @@ INSERT INTO project_assignments (user_id, project_id, start_date, hourly_rate) V
     ((SELECT id FROM users WHERE email = 'jane.smith@westendworkforce.com'), (SELECT id FROM projects WHERE name = 'Security Services'), '2024-01-01', 85.00),
     ((SELECT id FROM users WHERE email = 'mike.johnson@westendworkforce.com'), (SELECT id FROM projects WHERE name = 'Substitute Teachers'), '2024-01-01', 65.00),
     ((SELECT id FROM users WHERE email = 'john.doe@westendworkforce.com'), (SELECT id FROM projects WHERE name = 'Assembly Line'), '2024-01-01', 75.00),
-    ((SELECT id FROM users WHERE email = 'jane.smith@westendworkforce.com'), (SELECT id FROM projects WHERE name = 'Software Development'), '2024-01-01', 85.00);
-
--- Create storage buckets for file uploads
--- Note: This requires Supabase storage to be enabled
--- INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', true);
+    ((SELECT id FROM users WHERE email = 'jane.smith@westendworkforce.com'), (SELECT id FROM projects WHERE name = 'Software Development'), '2024-01-01', 85.00)
+ON CONFLICT (user_id, project_id, start_date) DO NOTHING;
 
 -- Grant necessary permissions
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
 
+-- Enable Row Level Security (RLS)
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE timesheets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rate_tables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rate_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE approvals ENABLE ROW LEVEL SECURITY;
 
+-- Basic RLS policies (you may want to customize these based on your security requirements)
+-- Users can only see their own data
+CREATE POLICY "Users can view own profile" ON users FOR SELECT USING (auth.uid()::text = id::text);
+CREATE POLICY "Users can update own profile" ON users FOR UPDATE USING (auth.uid()::text = id::text);
 
+-- Time entries: users can only see their own entries
+CREATE POLICY "Users can view own time entries" ON time_entries FOR SELECT USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users can insert own time entries" ON time_entries FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
+CREATE POLICY "Users can update own time entries" ON time_entries FOR UPDATE USING (auth.uid()::text = user_id::text);
 
+-- Projects: users can see projects they're assigned to
+CREATE POLICY "Users can view assigned projects" ON projects FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM project_assignments 
+        WHERE project_id = projects.id 
+        AND user_id::text = auth.uid()::text
+        AND is_active = true
+    )
+);
+
+-- Tasks: users can see tasks for projects they're assigned to
+CREATE POLICY "Users can view project tasks" ON tasks FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM project_assignments 
+        WHERE project_id = tasks.project_id 
+        AND user_id::text = auth.uid()::text
+        AND is_active = true
+    )
+);
+
+-- Project assignments: users can see their own assignments
+CREATE POLICY "Users can view own assignments" ON project_assignments FOR SELECT USING (auth.uid()::text = user_id::text);
+
+-- Clients: users can see clients for projects they're assigned to
+CREATE POLICY "Users can view project clients" ON clients FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM projects p
+        JOIN project_assignments pa ON p.id = pa.project_id
+        WHERE p.client_id = clients.id
+        AND pa.user_id::text = auth.uid()::text
+        AND pa.is_active = true
+    )
+);
+
+-- For admin users, allow full access
+CREATE POLICY "Admins have full access" ON users FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM users 
+        WHERE id::text = auth.uid()::text 
+        AND role = 'admin'
+    )
+);
+
+CREATE POLICY "Admins have full access" ON clients FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM users 
+        WHERE id::text = auth.uid()::text 
+        AND role = 'admin'
+    )
+);
+
+CREATE POLICY "Admins have full access" ON projects FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM users 
+        WHERE id::text = auth.uid()::text 
+        AND role = 'admin'
+    )
+);
+
+CREATE POLICY "Admins have full access" ON project_assignments FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM users 
+        WHERE id::text = auth.uid()::text 
+        AND role = 'admin'
+    )
+);
+
+CREATE POLICY "Admins have full access" ON tasks FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM users 
+        WHERE id::text = auth.uid()::text 
+        AND role = 'admin'
+    )
+);
+
+-- Allow authenticated users to read expense categories
+CREATE POLICY "Anyone can view expense categories" ON expense_categories FOR SELECT USING (true);
+
+-- Allow authenticated users to read expense categories
+CREATE POLICY "Anyone can view expense categories" ON expense_categories FOR SELECT USING (true);
+
+-- Success message
+SELECT 'Database setup completed successfully! All tables created and populated with sample data.' as status;
