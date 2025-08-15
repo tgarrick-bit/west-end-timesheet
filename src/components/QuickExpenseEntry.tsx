@@ -85,7 +85,7 @@ export function QuickExpenseEntry() {
 
       if (error) throw error
 
-      const projectData = data?.flatMap(item => item.projects).filter(Boolean) as Array<{
+      const projectData = data?.flatMap((item: any) => item.projects).filter(Boolean) as Array<{
         id: string
         name: string
         description: string

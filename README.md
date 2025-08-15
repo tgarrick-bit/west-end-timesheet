@@ -6,7 +6,7 @@ A comprehensive, enterprise-grade timesheet and expense tracking system built fo
 
 ### Core Functionality
 - **Daily Time Tracking**: Multi-project time entry with task codes and location tracking
-- **Timesheet Entry System**: `/timesheet/entry` - Easy daily time entry for employees
+- **Timesheet System**: `/timesheet` - Complete weekly timesheet with time entry functionality
 - **Timesheet Overview**: `/timesheet` - Weekly view of all time entries
 - **Expense Management**: Receipt upload, categorization, and approval workflows
 - **Multi-Project Support**: Users can work on multiple projects simultaneously

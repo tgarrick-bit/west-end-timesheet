@@ -239,7 +239,7 @@ export default function ClientApproverDashboard({ user }: ClientApproverDashboar
             </div>
             <div className="flex space-x-3">
               <button 
-                onClick={() => window.location.href = '/timesheet'}
+                onClick={() => window.location.href = '/dashboard'}
                 className="flex items-center px-6 py-3 bg-white text-[#232020] rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
               >
                 <FileText className="h-5 w-5 mr-2" />

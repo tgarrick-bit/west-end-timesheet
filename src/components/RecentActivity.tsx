@@ -69,7 +69,7 @@ export function RecentActivity() {
       .limit(5)
 
     if (timeEntries) {
-      timeEntries.forEach(entry => {
+      timeEntries.forEach((entry: any) => {
         allActivities.push({
           id: entry.id,
           type: 'time_entry',
@@ -91,7 +91,7 @@ export function RecentActivity() {
       .limit(5)
 
     if (expenses) {
-      expenses.forEach(expense => {
+      expenses.forEach((expense: any) => {
         allActivities.push({
           id: expense.id,
           type: 'expense',
@@ -122,7 +122,7 @@ export function RecentActivity() {
       .limit(10)
 
     if (approvals) {
-      approvals.forEach(approval => {
+      approvals.forEach((approval: any) => {
         const userName = approval.users ? 
           `${approval.users.first_name} ${approval.users.last_name}` : 
           'Unknown User'
@@ -161,7 +161,7 @@ export function RecentActivity() {
       .limit(5)
 
     if (users) {
-      users.forEach(user => {
+      users.forEach((user: any) => {
         allActivities.push({
           id: user.id,
           type: 'user',
@@ -182,7 +182,7 @@ export function RecentActivity() {
       .limit(5)
 
     if (projects) {
-      projects.forEach(project => {
+      projects.forEach((project: any) => {
         allActivities.push({
           id: project.id,
           type: 'time_entry',
@@ -211,7 +211,7 @@ export function RecentActivity() {
       .limit(10)
 
     if (approvals) {
-      approvals.forEach(approval => {
+      approvals.forEach((approval: any) => {
         const userName = approval.users ? 
           `${approval.users.first_name} ${approval.users.last_name}` : 
           'Unknown User'

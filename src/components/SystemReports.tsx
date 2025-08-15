@@ -139,17 +139,17 @@ export default function SystemReports() {
       if (pendingExpenseError) throw pendingExpenseError
 
       // Calculate totals
-      const totalHours = (timeData || []).reduce((sum, entry) => sum + (entry.total_hours || 0), 0) / 60
-      const totalExpenses = (expenseData || []).reduce((sum, entry) => sum + (entry.amount || 0), 0)
+      const totalHours = (timeData || []).reduce((sum: number, entry: any) => sum + (entry.total_hours || 0), 0) / 60
+      const totalExpenses = (expenseData || []).reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0)
       const monthlyRevenue = totalHours * 75 // Assuming average rate of $75/hour
 
       setReportData({
         totalUsers: users?.length || 0,
-        activeUsers: users?.filter(u => u.is_active).length || 0,
+        activeUsers: users?.filter((u: any) => u.is_active).length || 0,
         totalClients: clients?.length || 0,
-        activeClients: clients?.filter(c => c.is_active).length || 0,
+        activeClients: clients?.filter((c: any) => c.is_active).length || 0,
         totalProjects: projects?.length || 0,
-        activeProjects: projects?.filter(p => p.is_active).length || 0,
+        activeProjects: projects?.filter((p: any) => p.is_active).length || 0,
         totalHours: totalHours,
         totalExpenses: totalExpenses,
         monthlyRevenue: monthlyRevenue,
@@ -157,7 +157,7 @@ export default function SystemReports() {
       })
 
       // Format time entries for charts
-      const formattedTimeEntries: TimeEntry[] = (timeData || []).map(entry => ({
+      const formattedTimeEntries: TimeEntry[] = (timeData || []).map((entry: any) => ({
         date: entry.date,
         hours: (entry.total_hours || 0) / 60,
         project: entry.project?.name || 'Unknown',
@@ -165,7 +165,7 @@ export default function SystemReports() {
       }))
 
       // Format expense entries for charts
-      const formattedExpenseEntries: ExpenseEntry[] = (expenseData || []).map(entry => ({
+      const formattedExpenseEntries: ExpenseEntry[] = (expenseData || []).map((entry: any) => ({
         date: entry.date,
         amount: entry.amount || 0,
         project: entry.project?.name || 'Unknown',

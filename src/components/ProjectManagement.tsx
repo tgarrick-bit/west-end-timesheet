@@ -195,7 +195,7 @@ export default function ProjectManagement() {
       }
       
       console.log('✅ Clients fetched:', clientsData?.length || 0)
-      console.log('📋 Available clients:', clientsData?.map(c => ({ id: c.id, name: c.name, is_active: c.is_active })))
+      console.log('📋 Available clients:', clientsData?.map((c: any) => ({ id: c.id, name: c.name, is_active: c.is_active })))
       
       // If no clients found, load demo clients
       if (!clientsData || clientsData.length === 0) {
@@ -254,9 +254,9 @@ export default function ProjectManagement() {
         
         // Update projects with assignments
         if (projectsData) {
-          const projectsWithAssignments = projectsData.map(project => ({
+          const projectsWithAssignments = projectsData.map((project: any) => ({
             ...project,
-            assignments: assignmentsData?.filter(a => a.project_id === project.id) || []
+            assignments: assignmentsData?.filter((a: any) => a.project_id === project.id) || []
           }))
           setProjects(projectsWithAssignments)
         }

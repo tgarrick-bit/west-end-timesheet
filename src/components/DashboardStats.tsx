@@ -75,8 +75,8 @@ export function DashboardStats() {
       .eq('status', 'pending')
 
     setStats({
-      totalHoursThisWeek: (timeEntries || []).reduce((sum, entry) => sum + (entry.total_hours || 0), 0) / 60,
-      totalExpensesThisMonth: (expenses || []).reduce((sum, expense) => sum + (expense.amount || 0), 0),
+      totalHoursThisWeek: (timeEntries || []).reduce((sum: number, entry: any) => sum + (entry.total_hours || 0), 0) / 60,
+      totalExpensesThisMonth: (expenses || []).reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0),
       pendingApprovals: approvals?.length || 0,
       submittedItems: 0, // Will be calculated separately
     })

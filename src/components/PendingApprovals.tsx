@@ -71,7 +71,7 @@ export default function PendingApprovals() {
       if (expenseError) throw expenseError
 
       // Combine and format data
-      const formattedTimesheets: PendingItem[] = (timesheets || []).map(ts => ({
+      const formattedTimesheets: PendingItem[] = (timesheets || []).map((ts: any) => ({
         id: ts.id,
         type: 'timesheet' as const,
         user: ts.user,
@@ -83,7 +83,7 @@ export default function PendingApprovals() {
         submitted_at: ts.submitted_at || ts.created_at
       }))
 
-      const formattedExpenses: PendingItem[] = (expenses || []).map(exp => ({
+      const formattedExpenses: PendingItem[] = (expenses || []).map((exp: any) => ({
         id: exp.id,
         type: 'expense' as const,
         user: exp.user,

@@ -26,7 +26,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### 3. Test the System
 
 1. **Start your development server**: `npm run dev`
-2. **Navigate to `/timesheet/entry`** (employees only)
+2. **Navigate to `/timesheet`** (employees only)
 3. **Use the demo account**: `employee@westendworkforce.com` / `employee123`
 
 ## 📋 System Features
@@ -84,7 +84,7 @@ To add custom fields to time entries:
 
 1. **Update the database schema** in `setup-timesheet-tables.sql`
 2. **Modify the types** in `src/types/index.ts`
-3. **Update the form** in `src/app/timesheet/entry/page.tsx`
+3. **Update the form** in `src/app/timesheet/page.tsx`
 
 ### Modifying Approval Workflow
 The system supports multi-level approval:

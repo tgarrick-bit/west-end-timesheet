@@ -133,8 +133,7 @@ function getNavigationItems(role: string) {
     case 'employee':
       return [
         ...baseItems,
-        { href: '/timesheet', label: 'Timesheet', icon: Calendar },
-        { href: '/timesheet/entry', label: 'New Entry', icon: Plus },
+        { href: '/timesheets', label: 'Timesheets', icon: Calendar },
         { href: '/expenses', label: 'Expenses', icon: Receipt },
         { href: '/projects', label: 'Projects', icon: Building },
       ]

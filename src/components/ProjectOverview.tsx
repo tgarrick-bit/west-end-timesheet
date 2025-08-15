@@ -56,7 +56,7 @@ export function ProjectOverview() {
 
     if (error) throw error
 
-    const projectData = data?.flatMap(item => item.projects).filter(Boolean) as Array<{
+    const projectData = data?.flatMap((item: any) => item.projects).filter(Boolean) as Array<{
       id: string
       name: string
       description: string
@@ -89,8 +89,8 @@ export function ProjectOverview() {
 
         return {
           project,
-          totalHours: (timeEntries || []).reduce((sum, entry) => sum + (entry.total_hours || 0), 0) / 60,
-          totalExpenses: (expenses || []).reduce((sum, expense) => sum + (expense.amount || 0), 0),
+          totalHours: (timeEntries || []).reduce((sum: number, entry: any) => sum + (entry.total_hours || 0), 0) / 60,
+          totalExpenses: (expenses || []).reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0),
           isActive: project.is_active,
         }
       })
@@ -112,7 +112,7 @@ export function ProjectOverview() {
     if (error) throw error
 
     const projectSummaries = await Promise.all(
-      data.map(async (project) => {
+      data.map(async (project: any) => {
         const { start: weekStart, end: weekEnd } = getWeekDates()
         const { start: monthStart, end: monthEnd } = getMonthDates()
 
@@ -134,8 +134,8 @@ export function ProjectOverview() {
 
         return {
           project,
-          totalHours: (timeEntries || []).reduce((sum, entry) => sum + (entry.total_hours || 0), 0) / 60,
-          totalExpenses: (expenses || []).reduce((sum, expense) => sum + (expense.amount || 0), 0),
+          totalHours: (timeEntries || []).reduce((sum: number, entry: any) => sum + (entry.total_hours || 0), 0) / 60,
+          totalExpenses: (expenses || []).reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0),
           isActive: project.is_active,
         }
       })
@@ -155,7 +155,7 @@ export function ProjectOverview() {
     if (error) throw error
 
     const projectSummaries = await Promise.all(
-      data.map(async (project) => {
+      data.map(async (project: any) => {
         const { start: weekStart, end: weekEnd } = getWeekDates()
         const { start: monthStart, end: monthEnd } = getMonthDates()
 
@@ -177,8 +177,8 @@ export function ProjectOverview() {
 
         return {
           project,
-          totalHours: (timeEntries || []).reduce((sum, entry) => sum + (entry.total_hours || 0), 0) / 60,
-          totalExpenses: (expenses || []).reduce((sum, expense) => sum + (expense.amount || 0), 0),
+          totalHours: (timeEntries || []).reduce((sum: number, entry: any) => sum + (entry.total_hours || 0), 0) / 60,
+          totalExpenses: (expenses || []).reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0),
           isActive: project.is_active,
         }
       })

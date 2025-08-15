@@ -280,7 +280,7 @@ export default function PayrollDashboard({ user }: PayrollDashboardProps) {
             </div>
             <div className="flex space-x-3">
               <button 
-                onClick={() => window.location.href = '/timesheet'}
+                onClick={() => window.location.href = '/dashboard'}
                 className="flex items-center px-6 py-3 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-50 transition-colors shadow-sm"
               >
                 <FileText className="h-5 w-5 mr-2" />

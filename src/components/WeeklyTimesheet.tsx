@@ -1,429 +1,416 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle } from 'lucide-react';
 
 interface TimeEntry {
-  id: string
-  project: string
-  task: string
-  date: string
-  hours: number
-  notes: string
+  id: string;
+  day: string;
+  project: string;
+  hours: number;
+  description: string;
 }
 
-interface WeeklyTimesheetProps {
-  userId?: string
+interface Project {
+  id: string;
+  name: string;
 }
 
-export default function WeeklyTimesheet({ userId }: WeeklyTimesheetProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [currentWeek, setCurrentWeek] = useState(new Date())
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
+export default function WeeklyTimesheet() {
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
+    day: '',
     project: '',
-    task: '',
-    date: '',
-    hours: 0,
-    notes: ''
-  })
+    hours: '',
+    description: ''
+  });
 
-  // Project options for the dropdown
-  const projectOptions = [
-    'Metro Hospital - Nursing Staff',
-    'Downtown Office - Security',
-    'City Schools - Substitute Teachers',
-    'Riverside Manufacturing - Assembly Line',
-    'Tech Consulting - Software Development'
-  ]
+  // Simple project data
+  const projects: Project[] = [
+    { id: 'metro', name: 'Metro Hospital' },
+    { id: 'downtown', name: 'Downtown Office' },
+    { id: 'cityschools', name: 'City Schools' },
+    { id: 'riverside', name: 'Riverside Manufacturing' }
+  ];
 
-  // Get week start (Monday) and end (Sunday)
-  const getWeekStart = (date: Date) => {
-    const d = new Date(date)
-    const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
-    return new Date(d.setDate(diff))
-  }
+  // Get week dates with offset
+  const getWeekDates = (weekOffset: number = 0) => {
+    const today = new Date();
+    const monday = new Date(today);
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+    monday.setDate(diff + (weekOffset * 7));
+    
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      weekDates.push(date);
+    }
+    return weekDates;
+  };
 
-  const getWeekEnd = (date: Date) => {
-    const weekStart = getWeekStart(date)
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 6)
-    return weekEnd
-  }
+  const weekDates = getWeekDates(currentWeekOffset);
 
-  const weekStart = getWeekStart(currentWeek)
-  const weekEnd = getWeekEnd(currentWeek)
-
-  // Calculate total hours for the week
-  const totalHours = timeEntries.reduce((sum, entry) => sum + entry.hours, 0)
-
-  // Week navigation handlers
-  const goToPreviousWeek = () => {
-    console.log('Going to previous week')
-    const newWeek = new Date(currentWeek)
-    newWeek.setDate(currentWeek.getDate() - 7)
-    setCurrentWeek(newWeek)
-  }
-
-  const goToNextWeek = () => {
-    console.log('Going to next week')
-    const newWeek = new Date(currentWeek)
-    newWeek.setDate(currentWeek.getDate() + 7)
-    setCurrentWeek(newWeek)
-  }
-
-  const goToCurrentWeek = () => {
-    console.log('Going to current week')
-    setCurrentWeek(new Date())
-  }
-
-  // Modal handlers
-  const openModal = () => {
-    console.log('Opening modal')
-    setIsModalOpen(true)
-  }
-
-  const closeModal = () => {
-    console.log('Closing modal')
-    setIsModalOpen(false)
-    // Reset form data
+  const handleAddTimeEntry = (day?: string) => {
     setFormData({
+      day: day || weekDates[0].toISOString().split('T')[0],
       project: '',
-      task: '',
-      date: '',
-      hours: 0,
-      notes: ''
-    })
-  }
+      hours: '',
+      description: ''
+    });
+    setShowModal(true);
+  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'hours' ? parseFloat(value) || 0 : value
-    }))
-  }
+  const handleSaveEntry = () => {
+    if (!formData.day || !formData.project || !formData.hours) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
-  const handleSave = () => {
-    console.log('Saving time entry:', formData)
     const newEntry: TimeEntry = {
       id: Date.now().toString(),
-      ...formData
-    }
-    setTimeEntries(prev => [...prev, newEntry])
-    closeModal()
-  }
+      day: formData.day,
+      project: formData.project,
+      hours: parseFloat(formData.hours),
+      description: formData.description
+    };
+
+    setTimeEntries(prev => [...prev, newEntry]);
+    setShowModal(false);
+    setFormData({ day: '', project: '', hours: '', description: '' });
+  };
 
   const handleCancel = () => {
-    console.log('Canceling time entry')
-    closeModal()
-  }
+    setShowModal(false);
+    setFormData({ day: '', project: '', hours: '', description: '' });
+  };
 
-  const handleDeleteEntry = (entryId: string) => {
-    console.log('Deleting entry:', entryId)
-    setTimeEntries(prev => prev.filter(entry => entry.id !== entryId))
-  }
+  const handlePreviousWeek = () => {
+    setCurrentWeekOffset(prev => prev - 1);
+  };
 
-  const handleEditEntry = (entry: TimeEntry) => {
-    console.log('Editing entry:', entry)
-    setFormData({
-      project: entry.project,
-      task: entry.task,
-      date: entry.date,
-      hours: entry.hours,
-      notes: entry.notes
-    })
-    setIsModalOpen(true)
-  }
+  const handleNextWeek = () => {
+    setCurrentWeekOffset(prev => prev + 1);
+  };
 
-  const handleSubmitTimesheet = () => {
-    console.log('Submitting timesheet for week:', weekStart.toDateString(), 'to', weekEnd.toDateString())
-    console.log('Total entries:', timeEntries.length)
-  }
+  const handleGoToToday = () => {
+    setCurrentWeekOffset(0);
+  };
 
+  const handleSubmitTimesheet = async () => {
+    if (timeEntries.length === 0) {
+      alert('Please add at least one time entry before submitting');
+      return;
+    }
 
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIsSubmitted(true);
+    setIsSubmitting(false);
+    
+    // Reset after 3 seconds
+    setTimeout(() => setIsSubmitted(false), 3000);
+  };
+
+  const getEntriesForDay = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return timeEntries.filter(entry => entry.day === dateStr);
+  };
+
+  const getDayTotal = (date: Date) => {
+    const entries = getEntriesForDay(date);
+    return entries.reduce((sum, entry) => sum + entry.hours, 0);
+  };
+
+  const getWeekTotal = () => {
+    return timeEntries.reduce((sum, entry) => sum + entry.hours, 0);
+  };
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
       month: 'short', 
       day: 'numeric' 
-    })
-  }
+    });
+  };
 
-  const getDayName = (date: Date) => {
-    return date.toLocaleDateString('en-US', { weekday: 'short' })
-  }
+  const getProjectName = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    return project ? project.name : projectId;
+  };
 
-  const generateWeekDays = () => {
-    const days = []
-    const start = new Date(weekStart)
-    
-    for (let i = 0; i < 7; i++) {
-      const currentDate = new Date(start)
-      currentDate.setDate(start.getDate() + i)
-      days.push(currentDate)
-    }
-    
-    return days
-  }
-
-  const weekDays = generateWeekDays()
+  const isCurrentWeek = currentWeekOffset === 0;
+  const weekStartDate = weekDates[0];
+  const weekEndDate = weekDates[6];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Pink Header Bar */}
-      <div className="bg-[#e31c79] text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Weekly Timesheet</h1>
-              <p className="text-pink-100 mt-1">
-                {weekStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {weekEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{totalHours.toFixed(1)}h</div>
-              <div className="text-pink-100 text-sm">Total Hours</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Action Bar */}
-        <div className="flex justify-between items-center mb-6">
-          <button
-            onClick={openModal}
-            className="bg-[#e31c79] hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            + Add Time Entry
-          </button>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={handleSubmitTimesheet}
-              className="bg-[#05202E] hover:bg-[#0a2f3f] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              Submit Timesheet
-            </button>
-          </div>
-        </div>
-
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Header with Week Navigation */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Weekly Timesheet</h1>
+        
         {/* Week Navigation */}
-        <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+        <div className="flex items-center justify-center space-x-4 mb-4">
           <button
-            onClick={goToPreviousWeek}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center space-x-2"
+            onClick={handlePreviousWeek}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            title="Previous Week"
           >
-            <span className="text-lg">←</span>
-            <span>Previous Week</span>
+            <ChevronLeft className="h-5 w-5 text-gray-600" />
           </button>
           
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={goToCurrentWeek}
-              className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-6 py-2 rounded-lg transition-all duration-200 font-medium"
-            >
-              Current Week
-            </button>
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-800">
-                {weekStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {weekEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </div>
-              <div className="text-sm text-gray-500">Week {Math.ceil((weekStart.getDate() + weekStart.getDay()) / 7)}</div>
-            </div>
+          <div className="flex items-center space-x-3">
+            <Calendar className="h-5 w-5 text-pink-600" />
+            <span className="text-lg font-semibold text-gray-900">
+              {weekStartDate.toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric' 
+              })} - {weekEndDate.toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+              })}
+            </span>
           </div>
           
           <button
-            onClick={goToNextWeek}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-all duration-200 font-medium flex items-center space-x-2"
+            onClick={handleNextWeek}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            title="Next Week"
           >
-            <span>Next Week</span>
-            <span className="text-lg">→</span>
+            <ChevronRight className="h-5 w-5 text-gray-600" />
           </button>
         </div>
-
-        {/* Week Grid */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-          <div className="grid grid-cols-8 gap-0">
-            {/* Header row */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 font-semibold text-gray-700 border-r border-gray-200">
-              <div className="text-center">Project/Task</div>
-            </div>
-            {weekDays.map((day, index) => (
-              <div key={index} className="bg-gradient-to-b from-gray-50 to-white p-4 text-center font-semibold text-gray-700 border-r border-gray-200 last:border-r-0">
-                <div className="text-lg text-gray-800">{getDayName(day)}</div>
-                <div className="text-sm text-gray-500 mt-1">{formatDate(day)}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Time entries */}
-          {timeEntries.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 bg-gray-50">
-              <div className="text-6xl mb-4">📝</div>
-              <div className="text-xl font-medium text-gray-600 mb-2">No time entries for this week</div>
-              <div className="text-gray-500">Click &quot;Add Time Entry&quot; to get started</div>
-            </div>
-          ) : (
-            timeEntries.map((entry) => (
-              <div key={entry.id} className="grid grid-cols-8 gap-0 border-t border-gray-100 hover:bg-gray-50 transition-colors duration-200">
-                <div className="p-4 border-r border-gray-200">
-                  <div className="font-semibold text-gray-900 text-lg">{entry.project}</div>
-                  <div className="text-gray-600 mt-1">{entry.task}</div>
-                  <div className="flex space-x-3 mt-3">
-                    <button
-                      onClick={() => handleEditEntry(entry)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline transition-colors"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteEntry(entry.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium hover:underline transition-colors"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-                </div>
-                {weekDays.map((day) => {
-                  const isEntryDay = entry.date === day.toISOString().split('T')[0]
-                  return (
-                    <div key={day.toISOString()} className="p-4 text-center border-r border-gray-200 last:border-r-0">
-                      {isEntryDay ? (
-                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                          <div className="text-lg font-bold text-blue-800">{entry.hours}h</div>
-                          {entry.notes && (
-                            <div className="text-xs text-blue-600 mt-1 truncate" title={entry.notes}>
-                              {entry.notes}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-gray-300 text-lg">-</div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ))
-          )}
-        </div>
-
-
-
-        {/* Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Add Time Entry</h2>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Project
-                  </label>
-                  <select
-                    name="project"
-                    value={formData.project}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent transition-all duration-200"
-                  >
-                    <option value="">Select a project</option>
-                    {projectOptions.map((project, index) => (
-                      <option key={index} value={project}>
-                        {project}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Task
-                  </label>
-                  <input
-                    type="text"
-                    name="task"
-                    value={formData.task}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent transition-all duration-200"
-                    placeholder="Enter task description"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent transition-all duration-200"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Hours
-                    </label>
-                    <input
-                      type="number"
-                      name="hours"
-                      value={formData.hours}
-                      onChange={handleInputChange}
-                      step="0.25"
-                      min="0"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent transition-all duration-200"
-                      placeholder="0.0"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Notes
-                  </label>
-                  <textarea
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#e31c79] focus:border-transparent transition-all duration-200"
-                    placeholder="Optional notes about the work"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={handleCancel}
-                  className="px-6 py-3 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-semibold transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-3 bg-[#e31c79] hover:bg-pink-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
-                >
-                  Save Entry
-                </button>
-              </div>
-            </div>
-          </div>
+        
+        {/* Go to Today Button */}
+        {!isCurrentWeek && (
+          <button
+            onClick={handleGoToToday}
+            className="inline-flex items-center px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-md hover:bg-pink-700 transition-colors"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Go to Today
+          </button>
         )}
       </div>
+
+      {/* Add Time Entry Button */}
+      <div className="text-center mb-8">
+        <button
+          onClick={() => handleAddTimeEntry()}
+          className="bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+        >
+          + Add Time Entry
+        </button>
+      </div>
+
+      {/* Week Grid */}
+      <div className="grid grid-cols-7 gap-4 mb-8">
+        {weekDates.map((date, index) => {
+          const dayEntries = getEntriesForDay(date);
+          const dayTotal = getDayTotal(date);
+          const isToday = date.toDateString() === new Date().toDateString();
+          
+          return (
+            <div 
+              key={date.toISOString()} 
+              className={`bg-white border-2 rounded-lg p-4 min-h-[220px] transition-all hover:shadow-md cursor-pointer ${
+                isToday ? 'border-pink-400 bg-pink-50' : 'border-gray-200'
+              }`}
+              onClick={() => handleAddTimeEntry(date.toISOString().split('T')[0])}
+            >
+              <div className="text-center mb-3">
+                <div className={`font-semibold ${isToday ? 'text-pink-900' : 'text-gray-900'}`}>
+                  {formatDate(date)}
+                </div>
+                <div className={`text-sm ${isToday ? 'text-pink-700' : 'text-gray-500'}`}>
+                  {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+                {isToday && (
+                  <div className="text-xs text-pink-600 font-medium mt-1">TODAY</div>
+                )}
+              </div>
+              
+              <div className="text-center mb-3">
+                <span className={`text-lg font-bold ${isToday ? 'text-pink-700' : 'text-pink-600'}`}>
+                  {dayTotal.toFixed(1)}h
+                </span>
+              </div>
+              
+              <div className="space-y-2 mb-3">
+                {dayEntries.map(entry => (
+                  <div key={entry.id} className="bg-pink-50 rounded p-2 text-xs border border-pink-200">
+                    <div className="font-medium text-pink-900 truncate">{getProjectName(entry.project)}</div>
+                    <div className="text-pink-700 font-semibold">{entry.hours}h</div>
+                    {entry.description && (
+                      <div className="text-pink-600 truncate text-xs">{entry.description}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Add Entry Button for this day */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddTimeEntry(date.toISOString().split('T')[0]);
+                }}
+                className="w-full text-xs text-pink-600 hover:text-pink-700 font-medium py-1 hover:bg-pink-100 rounded transition-colors"
+              >
+                + Add Entry
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Weekly Total and Submit */}
+      <div className="text-center space-y-4">
+        <div className="inline-block bg-gray-100 rounded-lg px-6 py-3">
+          <span className="text-lg font-semibold text-gray-900">
+            Weekly Total: {getWeekTotal().toFixed(1)} hours
+          </span>
+        </div>
+        
+        {/* Submit Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={handleSubmitTimesheet}
+            disabled={isSubmitting || timeEntries.length === 0}
+            className={`flex items-center px-8 py-3 rounded-lg font-semibold text-white transition-all ${
+              isSubmitting 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : timeEntries.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Submitting...
+              </>
+            ) : isSubmitted ? (
+              <>
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Submitted Successfully!
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Submit Timesheet
+              </>
+            )}
+          </button>
+        </div>
+        
+        {timeEntries.length === 0 && (
+          <p className="text-sm text-gray-500">Add time entries to submit your timesheet</p>
+        )}
+      </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Add Time Entry</h3>
+            
+            <div className="space-y-4">
+              {/* Day Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Day *
+                </label>
+                <select
+                  value={formData.day}
+                  onChange={(e) => setFormData(prev => ({ ...prev, day: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  {weekDates.map(date => (
+                    <option key={date.toISOString()} value={date.toISOString().split('T')[0]}>
+                      {formatDate(date)} - {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Project *
+                </label>
+                <select
+                  value={formData.project}
+                  onChange={(e) => setFormData(prev => ({ ...prev, project: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="">Select a project</option>
+                  {projects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Hours Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hours *
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  max="16"
+                  value={formData.hours}
+                  onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="8.5"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Describe the work performed..."
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEntry}
+                className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }
