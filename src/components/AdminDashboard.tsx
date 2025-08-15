@@ -25,6 +25,9 @@ import ClientsAndProjects from './ClientsAndProjects'
 import EmployeeManagement from './EmployeeManagement'
 import PendingApprovals from './PendingApprovals'
 import SystemReports from './SystemReports'
+import AdminTimesheetManagement from './AdminTimesheetManagement'
+import AdminExpenseManagement from './AdminExpenseManagement'
+import AdminSettings from './AdminSettings'
 
 
 interface AdminDashboardProps {
@@ -550,25 +553,20 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {activeSection === 'clients' && <ClientsAndProjects />}
           {activeSection === 'pending' && <PendingApprovals />}
           {activeSection === 'reports' && <SystemReports />}
+          {activeSection === 'timesheets' && <AdminTimesheetManagement />}
+          {activeSection === 'expenses' && <AdminExpenseManagement />}
+          {activeSection === 'settings' && <AdminSettings />}
 
           
           {/* Other sections placeholder */}
-          {!['dashboard', 'users', 'clients', 'pending', 'reports'].includes(activeSection) && (
+          {!['dashboard', 'users', 'clients', 'pending', 'reports', 'timesheets', 'expenses', 'settings'].includes(activeSection) && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <div className="p-4 bg-[#e5ddd8] rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  {(() => {
-                    const Icon = navigationItems.find(item => item.id === activeSection)?.icon || BarChart3
-                    return <Icon className="h-8 w-8 text-[#465079]" />
-                  })()}
-                </div>
-                <h2 className="text-2xl font-semibold text-[#232020] mb-2">
-                  {navigationItems.find(item => item.id === activeSection)?.label}
-                </h2>
-                <p className="text-[#465079]">
-                  This section is under development. Check back soon for full functionality.
-                </p>
+              <div className="text-2xl font-semibold text-[#232020] mb-2">
+                {navigationItems.find(item => item.id === activeSection)?.label}
               </div>
+              <p className="text-[#465079]">
+                This section is under development. Check back soon for full functionality.
+              </p>
             </div>
           )}
         </main>
