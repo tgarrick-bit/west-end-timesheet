@@ -266,6 +266,37 @@ export default function PayrollDashboard({ user }: PayrollDashboardProps) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Timesheet Management Card */}
+        <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white bg-opacity-20 rounded-full">
+                <Clock className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Timesheet Processing</h2>
+                <p className="text-green-100 mt-1">Process approved timesheets for payroll</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => window.location.href = '/timesheet'}
+                className="flex items-center px-6 py-3 bg-white text-green-700 rounded-lg font-semibold hover:bg-green-50 transition-colors shadow-sm"
+              >
+                <FileText className="h-5 w-5 mr-2" />
+                View Timesheets
+              </button>
+              <button 
+                onClick={() => window.location.href = '/dashboard?section=pending'}
+                className="flex items-center px-6 py-3 bg-white bg-opacity-20 text-white rounded-lg font-semibold hover:bg-white hover:text-green-700 transition-colors"
+              >
+                <Calculator className="h-5 w-5 mr-2" />
+                Calculate Payroll
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Payroll Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

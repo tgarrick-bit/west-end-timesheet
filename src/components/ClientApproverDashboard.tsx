@@ -225,6 +225,37 @@ export default function ClientApproverDashboard({ user }: ClientApproverDashboar
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Timesheet Management Card */}
+        <div className="bg-gradient-to-r from-[#465079] to-[#232020] rounded-lg shadow-lg p-6 text-white mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white bg-opacity-20 rounded-full">
+                <Clock className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Timesheet Approvals</h2>
+                <p className="text-gray-200 mt-1">Review and approve employee timesheets and expenses</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => window.location.href = '/timesheet'}
+                className="flex items-center px-6 py-3 bg-white text-[#232020] rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                <FileText className="h-5 w-5 mr-2" />
+                View All Timesheets
+              </button>
+              <button 
+                onClick={() => window.location.href = '/dashboard?section=pending'}
+                className="flex items-center px-6 py-3 bg-white bg-opacity-20 text-white rounded-lg font-semibold hover:bg-white hover:text-[#232020] transition-colors"
+              >
+                <AlertCircle className="h-5 w-5 mr-2" />
+                Pending Items
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Pending Approvals */}
           <div className="lg:col-span-2 space-y-6">

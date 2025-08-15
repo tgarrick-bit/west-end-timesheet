@@ -6,6 +6,8 @@ A comprehensive, enterprise-grade timesheet and expense tracking system built fo
 
 ### Core Functionality
 - **Daily Time Tracking**: Multi-project time entry with task codes and location tracking
+- **Timesheet Entry System**: `/timesheet/entry` - Easy daily time entry for employees
+- **Timesheet Overview**: `/timesheet` - Weekly view of all time entries
 - **Expense Management**: Receipt upload, categorization, and approval workflows
 - **Multi-Project Support**: Users can work on multiple projects simultaneously
 - **External Client Approval**: Client representatives can approve their workers' time/expenses
@@ -85,6 +87,7 @@ The system uses West End Workforce's official brand colors:
 4. **Set up the database**
    - Create a new Supabase project
    - Run the SQL commands from `database-schema.sql` in your Supabase SQL editor
+   - For timesheet system only: Use `setup-timesheet-tables.sql` for focused setup
    - Enable storage and create a `receipts` bucket
 
 5. **Start the development server**

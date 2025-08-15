@@ -1,13 +1,16 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import { User as AppUser } from '@/types'
+import { convertEnhancedUserToAppUser } from '@/lib/utils'
 
 interface AuthContextType {
   user: User | null
   appUser: AppUser | null
   session: Session | null
+  loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string, userData: Partial<AppUser>) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -20,13 +23,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [appUser, setAppUser] = useState<AppUser | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
 
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        fetchAppUser(session.user.id)
+      }
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        await fetchAppUser(session.user.id)
+      } else {
+        setAppUser(null)
+      }
+      
+      setLoading(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function fetchAppUser(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        console.error('Error fetching app user:', error)
+        return
+      }
+
+      setAppUser(data)
+    } catch (error) {
+      console.error('Error fetching app user:', error)
+    }
+  }
 
   const signIn = async (email: string, password: string) => {
-    // Demo users for testing
+    // Demo accounts for testing
     const demoUsers = [
       {
-        id: '1',
+        id: 'admin-demo',
         email: 'admin@westendworkforce.com',
         password: 'admin123',
         first_name: 'Tracy',
@@ -34,66 +86,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: 'admin'
       },
       {
-        id: '2',
-        email: 'employee@westendworkforce.com',
+        id: 'employee-demo',
+        email: 'employee@westendworkforce.com', 
         password: 'employee123',
         first_name: 'John',
-        last_name: 'Doe',
+        last_name: 'Smith',
         role: 'employee'
-      },
-      {
-        id: '3',
-        email: 'manager@westendworkforce.com',
-        password: 'manager123',
-        first_name: 'Sarah',
-        last_name: 'Johnson',
-        role: 'client_approver'
-      },
-      {
-        id: '4',
-        email: 'payroll@westendworkforce.com',
-        password: 'payroll123',
-        first_name: 'Mike',
-        last_name: 'Wilson',
-        role: 'payroll'
       }
-    ];
+    ]
 
-    const user = demoUsers.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      setUser({ id: user.id, email: user.email } as User);
+    // Check demo users first
+    const demoUser = demoUsers.find(u => u.email === email && u.password === password)
+    if (demoUser) {
+      setUser({ id: demoUser.id, email: demoUser.email } as User)
       setAppUser({ 
-        id: user.id, 
-        email: user.email, 
-        first_name: user.first_name, 
-        last_name: user.last_name, 
-        role: user.role 
-      } as AppUser);
-      return { error: null };
+        id: demoUser.id, 
+        email: demoUser.email, 
+        first_name: demoUser.first_name, 
+        last_name: demoUser.last_name, 
+        role: demoUser.role,
+        client_id: undefined,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as AppUser)
+      return { error: null }
     }
-    
-    return { error: new Error('Invalid email or password') };
+
+    // If not demo user, try Supabase
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    return { error }
   }
 
   const signUp = async (email: string, password: string, userData: Partial<AppUser>) => {
-    return { error: new Error('Sign up not implemented in demo mode') }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+    
+    if (!error && userData) {
+      // Create user profile in our users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([{
+          id: userData.id || '',
+          email: userData.email || email,
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          role: userData.role || 'employee',
+          client_id: userData.client_id,
+          is_active: true,
+        }])
+      
+      if (profileError) {
+        console.error('Error creating user profile:', profileError)
+      }
+    }
+    
+    return { error }
   }
 
   const signOut = async () => {
-    setUser(null)
-    setAppUser(null)
-    setSession(null)
+    await supabase.auth.signOut()
   }
 
   const resetPassword = async (email: string) => {
-    return { error: new Error('Password reset not implemented in demo mode') }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    return { error }
   }
 
   const value = {
     user,
     appUser,
     session,
+    loading,
     signIn,
     signUp,
     signOut,

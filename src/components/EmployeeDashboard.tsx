@@ -1,368 +1,233 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { 
-  Clock, 
-  Calendar, 
-  Receipt, 
-  CheckCircle, 
-  AlertCircle, 
-  History,
-  Play,
-  Square,
-  Plus,
-  FileText,
-  DollarSign
-} from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
-import { User, TimeEntry, Timesheet, ExpenseItem } from '@/types'
-import { LogOut } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { enhancedDataService } from '@/lib/enhanced_realistic_data_service';
+import { User, EmployeeDashboardStats } from '@/types';
+import WeeklyTimesheet from '@/components/WeeklyTimesheet';
+import { Clock, Plus, FileText } from 'lucide-react';
 
 interface EmployeeDashboardProps {
-  user: User
+  user: User;
 }
 
 export default function EmployeeDashboard({ user }: EmployeeDashboardProps) {
-  const { signOut } = useAuth()
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [isClockedIn, setIsClockedIn] = useState(false)
-  const [clockInTime, setClockInTime] = useState<Date | null>(null)
-  const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([])
-  const [weeklyHours, setWeeklyHours] = useState(0)
-  const [pendingApprovals, setPendingApprovals] = useState(0)
-  const [recentSubmissions, setRecentSubmissions] = useState<Array<{
-    id: string
-    type: 'timesheet' | 'expense'
-    date: string
-    status: string
-    hours?: number
-    amount?: number
-  }>>([])
+  const [stats, setStats] = useState<EmployeeDashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'timesheet' | 'overview' | 'history'>('timesheet');
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
+    loadStats();
+  }, [user.id]);
 
-  useEffect(() => {
-    // Simulate fetching employee data
-    fetchEmployeeData()
-  }, [])
-
-  const fetchEmployeeData = async () => {
-    // Simulate API calls
-    setTimeout(() => {
-      setTodayEntries([
-        {
-          id: '1',
-          user_id: user.id,
-          project_id: '1',
-          task_id: '1',
-          date: new Date().toISOString().split('T')[0],
-          start_time: '09:00',
-          end_time: '12:00',
-          total_hours: 180, // 3 hours in minutes
-          notes: 'Frontend development',
-          location: 'Office',
-          is_submitted: false,
-          is_approved: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ])
-      setWeeklyHours(32.5)
-      setPendingApprovals(2)
-      setRecentSubmissions([
-        { id: '1', type: 'timesheet', date: '2024-01-15', status: 'pending', hours: 40 },
-        { id: '2', type: 'expense', date: '2024-01-14', status: 'approved', amount: 45.50 }
-      ])
-    }, 1000)
-  }
-
-  const handleClockInOut = () => {
-    if (isClockedIn) {
-      setIsClockedIn(false)
-      setClockInTime(null)
-    } else {
-      setIsClockedIn(true)
-      setClockInTime(new Date())
+  const loadStats = async () => {
+    try {
+      const dashboardStats = await enhancedDataService.getDashboardStats(user.id);
+      setStats(dashboardStats);
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  }
+  const StatCard = ({ title, value, subtitle, color = 'blue' }: {
+    title: string;
+    value: string | number;
+    subtitle?: string;
+    color?: 'blue' | 'green' | 'yellow' | 'purple';
+  }) => {
+    const colorClasses = {
+      blue: 'bg-blue-50 text-blue-700 border-blue-200',
+      green: 'bg-green-50 text-green-700 border-green-200',
+      yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      purple: 'bg-purple-50 text-purple-700 border-purple-200'
+    };
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${hours}h ${mins}m`
+    return (
+      <div className={`p-6 rounded-lg border ${colorClasses[color]}`}>
+        <h3 className="text-sm font-medium opacity-75">{title}</h3>
+        <p className="text-2xl font-bold mt-1">{value}</p>
+        {subtitle && <p className="text-sm opacity-75 mt-1">{subtitle}</p>}
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="space-y-6">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-[#232020]">Employee Dashboard</h1>
-              <p className="text-[#465079]">Welcome back, {user.first_name} {user.last_name}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-mono text-[#232020]">
-                {formatTime(currentTime)}
-              </div>
-              <div className="text-sm text-[#465079]">
-                {currentTime.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </div>
-            </div>
-            <button
-              onClick={signOut}
-              className="ml-4 px-4 py-2 text-[#465079] hover:text-[#e31c79] hover:bg-gray-100 rounded-lg transition-colors flex items-center"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </button>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome back, {user.first_name}!
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {user.role} • {user.role} Department
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Employee
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Employee ID</p>
+            <p className="font-mono text-gray-900">{user.id}</p>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Quick Actions */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Clock In/Out Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-[#232020]">Time Tracking</h2>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  isClockedIn 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {isClockedIn ? 'Clocked In' : 'Clocked Out'}
-                </div>
-              </div>
-              
-              <div className="text-center mb-6">
-                <div className="text-4xl font-mono text-[#232020] mb-2">
-                  {isClockedIn && clockInTime 
-                    ? formatTime(new Date(Date.now() - clockInTime.getTime()))
-                    : '00:00:00'
-                  }
-                </div>
-                <p className="text-[#465079]">
-                  {isClockedIn && clockInTime 
-                    ? `Since ${clockInTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}`
-                    : 'Ready to start your day'
-                  }
-                </p>
-              </div>
+      {/* Timesheet Entry Prominent Card */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-white bg-opacity-20 rounded-full">
+              <Clock className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Timesheet Entry</h2>
+              <p className="text-blue-100 mt-1">Quickly log your time and submit for approval</p>
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <a 
+              href="/timesheet/entry" 
+              className="flex items-center px-6 py-3 bg-white text-blue-700 rounded-lg font-semibold hover:bg-blue-50 transition-colors shadow-sm"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              New Entry
+            </a>
+            <a 
+              href="/timesheet" 
+              className="flex items-center px-6 py-3 bg-white bg-opacity-20 text-white rounded-lg font-semibold hover:bg-white hover:text-blue-700 transition-colors"
+            >
+              <FileText className="h-5 w-5 mr-2" />
+              View Timesheet
+            </a>
+          </div>
+        </div>
+      </div>
 
+      {/* Quick Stats */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="This Week Hours"
+            value={stats.thisWeekHours?.toFixed(1) || '0'}
+            subtitle="Monday - Friday"
+            color="blue"
+          />
+          <StatCard
+            title="Pending Approvals"
+            value={stats.pendingApprovals || 0}
+            subtitle="Awaiting review"
+            color="yellow"
+          />
+          <StatCard
+            title="Active Projects"
+            value={stats.totalProjects || 0}
+            subtitle="Currently assigned"
+            color="green"
+          />
+          <StatCard
+            title="Total Entries"
+            value={stats.totalEntries || 0}
+            subtitle="All time"
+            color="purple"
+          />
+        </div>
+      )}
+
+      {/* Navigation Tabs */}
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { id: 'timesheet', label: 'Weekly Timesheet', icon: '📅' },
+              { id: 'overview', label: 'Overview', icon: '📊' },
+              { id: 'history', label: 'History', icon: '📋' }
+            ].map(tab => (
               <button
-                onClick={handleClockInOut}
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                  isClockedIn
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-[#e31c79] hover:bg-[#d4156a] text-white'
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'timesheet' | 'overview' | 'history')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                {isClockedIn ? (
-                  <>
-                    <Square className="inline-block w-5 h-5 mr-2" />
-                    Clock Out
-                  </>
-                ) : (
-                  <>
-                    <Play className="inline-block w-5 h-5 mr-2" />
-                    Clock In
-                  </>
-                )}
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === 'timesheet' && (
+            <WeeklyTimesheet />
+          )}
+          
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Last timesheet submitted</span>
+                      <span className="text-sm text-gray-500">2 days ago</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Hours this month</span>
+                      <span className="font-medium">{(stats?.thisWeekHours ? stats.thisWeekHours * 4 : 0).toFixed(1)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Average daily hours</span>
+                      <span className="font-medium">{(stats?.thisWeekHours ? stats.thisWeekHours / 5 : 0).toFixed(1)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                  <div className="space-y-3">
+                    <a href="/timesheet/entry" className="block w-full text-left p-3 bg-white rounded-md hover:bg-gray-50 border border-gray-200">
+                      ⏰ New Time Entry
+                    </a>
+                    <a href="/timesheet" className="block w-full text-left p-3 bg-white rounded-md hover:bg-gray-50 border border-gray-200">
+                      📝 View Timesheet
+                    </a>
+                    <button className="w-full text-left p-3 bg-white rounded-md hover:bg-gray-50 border border-gray-200">
+                      👤 Update Profile
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'history' && (
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <div className="text-gray-400 text-6xl mb-4">📋</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Timesheet History</h3>
+              <p className="text-gray-600 mb-4">
+                View and manage your previous timesheet submissions
+              </p>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Coming Soon
               </button>
             </div>
-
-            {/* Quick Time Entry */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-[#232020]">Quick Time Entry</h2>
-                <button className="p-2 text-[#e31c79] hover:bg-[#e31c79] hover:text-white rounded-lg transition-colors">
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {todayEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between p-4 bg-[#e5ddd8] rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium text-[#232020]">Project Name</p>
-                      <p className="text-sm text-[#465079]">{entry.notes}</p>
-                      <p className="text-xs text-[#465079]">
-                        {entry.start_time} - {entry.end_time}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-[#232020]">
-                        {formatDuration(entry.total_hours)}
-                      </p>
-                      <p className="text-sm text-[#465079]">Today</p>
-                    </div>
-                  </div>
-                ))}
-                
-                {todayEntries.length === 0 && (
-                  <div className="text-center py-8 text-[#465079]">
-                    <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No time entries for today</p>
-                    <p className="text-sm">Click the + button to add your first entry</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Weekly Timesheet */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-[#232020]">This Week&apos;s Timesheet</h2>
-                <button className="px-4 py-2 bg-[#e31c79] text-white rounded-lg hover:bg-[#d4156a] transition-colors">
-                  Submit Timesheet
-                </button>
-              </div>
-              
-              <div className="bg-[#e5ddd8] rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-[#232020] mb-1">
-                  {weeklyHours}h
-                </div>
-                <p className="text-[#465079]">Total hours this week</p>
-                <p className="text-sm text-[#465079] mt-1">
-                  {40 - weeklyHours > 0 ? `${40 - weeklyHours}h remaining` : 'Weekly goal met!'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Status & Actions */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-[#232020] mb-4">Quick Stats</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#465079]">This Week</span>
-                  <span className="font-semibold text-[#232020]">{weeklyHours}h</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#465079]">Pending Approvals</span>
-                  <span className="font-semibold text-[#232020]">{pendingApprovals}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#465079]">Submitted Today</span>
-                  <span className="font-semibold text-[#232020]">{todayEntries.length}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Pending Approvals */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-[#232020] mb-4">Pending Approvals</h2>
-              {pendingApprovals > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
-                    <div>
-                      <p className="font-medium text-[#232020]">Timesheet Review</p>
-                      <p className="text-sm text-[#465079]">Week of Jan 15</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
-                    <div>
-                      <p className="font-medium text-[#232020]">Expense Review</p>
-                      <p className="text-sm text-[#465079]">$89.99 - Jan 14</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4 text-[#465079]">
-                  <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
-                  <p>All caught up!</p>
-                </div>
-              )}
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-[#232020] mb-4">Recent Activity</h2>
-              <div className="space-y-3">
-                {recentSubmissions.map((submission) => (
-                  <div key={submission.id} className="flex items-center p-3 bg-[#e5ddd8] rounded-lg">
-                    {submission.type === 'timesheet' ? (
-                      <FileText className="w-5 h-5 text-[#465079] mr-3" />
-                    ) : (
-                      <DollarSign className="w-5 h-5 text-[#465079] mr-3" />
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium text-[#232020]">
-                        {submission.type === 'timesheet' ? 'Timesheet' : 'Expense'}
-                      </p>
-                      <p className="text-sm text-[#465079]">
-                        {submission.type === 'timesheet' 
-                          ? `${submission.hours}h` 
-                          : `$${submission.amount}`
-                        } • {submission.date}
-                      </p>
-                    </div>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      submission.status === 'approved' 
-                        ? 'bg-green-100 text-green-800'
-                        : submission.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {submission.status}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-[#232020] mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <button className="w-full text-left p-3 bg-[#e5ddd8] hover:bg-[#d4c8c0] rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Plus className="w-5 h-5 text-[#465079] mr-3" />
-                    <span className="font-medium text-[#232020]">Add Time Entry</span>
-                  </div>
-                </button>
-                <button className="w-full text-left p-3 bg-[#e5ddd8] hover:bg-[#d4c8c0] rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Receipt className="w-5 h-5 text-[#465079] mr-3" />
-                    <span className="font-medium text-[#232020]">Submit Expense</span>
-                  </div>
-                </button>
-                <button className="w-full text-left p-3 bg-[#e5ddd8] hover:bg-[#d4c8c0] rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-[#465079] mr-3" />
-                    <span className="font-medium text-[#232020]">View Calendar</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      </main>
+      </div>
     </div>
-  )
+  );
 }

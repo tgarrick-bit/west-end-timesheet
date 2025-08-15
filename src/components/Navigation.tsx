@@ -14,9 +14,10 @@ import {
   LayoutDashboard,
   FileText,
   Building,
-  BarChart3
+  BarChart3,
+  Plus
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+
 
 export function Navigation() {
   const { appUser, signOut } = useAuth()
@@ -133,6 +134,7 @@ function getNavigationItems(role: string) {
       return [
         ...baseItems,
         { href: '/timesheet', label: 'Timesheet', icon: Calendar },
+        { href: '/timesheet/entry', label: 'New Entry', icon: Plus },
         { href: '/expenses', label: 'Expenses', icon: Receipt },
         { href: '/projects', label: 'Projects', icon: Building },
       ]

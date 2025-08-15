@@ -2,19 +2,22 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
 
 export default function HomePage() {
-  const { appUser } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (appUser) {
-      router.push('/dashboard')
-    } else {
-      router.push('/auth/signin')
-    }
-  }, [appUser, router])
+    router.replace('/auth/signin')
+  }, [router])
 
-  return null
+  return (
+    <div className="min-h-screen bg-[#05202E] flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-[#e31c79] rounded-lg flex items-center justify-center mx-auto mb-4">
+          <span className="text-white font-bold text-xl">WE</span>
+        </div>
+        <p className="text-white">Loading West End Workforce...</p>
+      </div>
+    </div>
+  )
 }

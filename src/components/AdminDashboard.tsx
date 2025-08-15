@@ -340,6 +340,37 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                 </div>
               </div>
 
+              {/* Timesheet Management Card */}
+              <div className="bg-gradient-to-r from-[#e31c79] to-[#d4156a] rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-white bg-opacity-20 rounded-full">
+                      <Clock className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Timesheet Management</h2>
+                      <p className="text-pink-100 mt-1">Monitor and manage employee timesheets</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button 
+                      onClick={() => setActiveSection('timesheets')}
+                      className="flex items-center px-6 py-3 bg-white text-[#e31c79] rounded-lg font-semibold hover:bg-pink-50 transition-colors shadow-sm"
+                    >
+                      <FileText className="h-5 w-5 mr-2" />
+                      View All Timesheets
+                    </button>
+                    <button 
+                      onClick={() => setActiveSection('pending')}
+                      className="flex items-center px-6 py-3 bg-white bg-opacity-20 text-white rounded-lg font-semibold hover:bg-white hover:text-[#e31c79] transition-colors"
+                    >
+                      <AlertCircle className="h-5 w-5 mr-2" />
+                      Pending Approvals
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Quick Stats */}
               <div>
                 <h2 className="text-xl font-semibold text-[#232020] mb-6">System Overview</h2>

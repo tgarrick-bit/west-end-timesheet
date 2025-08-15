@@ -207,6 +207,13 @@ export interface DashboardStats {
   submittedItems: number
 }
 
+export interface EmployeeDashboardStats {
+  thisWeekHours: number
+  pendingApprovals: number
+  totalProjects: number
+  totalEntries: number
+}
+
 export interface ProjectSummary {
   project: Project
   totalHours: number

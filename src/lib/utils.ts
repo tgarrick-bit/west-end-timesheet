@@ -174,6 +174,41 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   }
 }
 
+// Type conversion utilities
+export function convertEnhancedUserToAppUser(enhancedUser: {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  isActive: boolean;
+  hireDate: string;
+}): {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  client_id: undefined;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+} | null {
+  if (!enhancedUser) return null;
+  
+  return {
+    id: enhancedUser.id,
+    email: enhancedUser.email,
+    first_name: enhancedUser.firstName,
+    last_name: enhancedUser.lastName,
+    role: enhancedUser.role === 'manager' ? 'admin' : enhancedUser.role,
+    client_id: undefined,
+    is_active: enhancedUser.isActive,
+    created_at: enhancedUser.hireDate,
+    updated_at: enhancedUser.hireDate
+  };
+}
+
 
 
 
