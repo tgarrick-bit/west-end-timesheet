@@ -5,6 +5,7 @@ import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { User as AppUser } from '@/types'
 import { convertEnhancedUserToAppUser } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   user: User | null
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [appUser, setAppUser] = useState<AppUser | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     // Get initial session
@@ -92,14 +94,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         first_name: 'John',
         last_name: 'Smith',
         role: 'employee'
+      },
+      {
+        id: 'manager-demo',
+        email: 'jane.smith@abccorp.com',
+        password: 'manager123',
+        first_name: 'Jane',
+        last_name: 'Smith',
+        role: 'manager',
+        company: 'ABC Corporation'
       }
     ]
 
     // Check demo users first
     const demoUser = demoUsers.find(u => u.email === email && u.password === password)
     if (demoUser) {
-      setUser({ id: demoUser.id, email: demoUser.email } as User)
-      setAppUser({ 
+      const userData = { 
         id: demoUser.id, 
         email: demoUser.email, 
         first_name: demoUser.first_name, 
@@ -108,8 +118,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         client_id: undefined,
         is_active: true,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as AppUser)
+        updated_at: new Date().toISOString(),
+        company: demoUser.company || undefined
+      } as AppUser
+
+      setUser({ id: demoUser.id, email: demoUser.email } as User)
+      setAppUser(userData)
+      
+      // Role-based routing after successful login
+      if (demoUser.role === 'admin') {
+        router.push('/admin')
+      } else if (demoUser.role === 'manager') {
+        router.push('/manager')
+      } else if (demoUser.role === 'employee') {
+        router.push('/dashboard')
+      }
+      
       return { error: null }
     }
 

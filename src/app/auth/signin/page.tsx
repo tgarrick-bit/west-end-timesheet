@@ -22,9 +22,8 @@ export default function SignInPage() {
     if (error) {
       setError(error.message)
       setIsLoading(false)
-    } else {
-      router.push('/dashboard')
     }
+    // Remove hardcoded redirect - AuthContext will handle routing based on role
   }
 
   return (
