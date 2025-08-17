@@ -1,0 +1,18 @@
+name: Clone Prod DB to Staging
+on:
+  workflow_dispatch: {}  # run manually from the Actions tab
+jobs:
+  clone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Clone DB (pg_dump -> pg_restore)
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          STG_DATABASE_URL:  ${{ secrets.STG_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          echo "Dumping from PROD and restoring into STAGING..."
+          pg_dump "$PROD_DATABASE_URL" -Fc | pg_restore -c -d "$STG_DATABASE_URL"
+          echo "Clone complete."
