@@ -5,40 +5,67 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   Users, 
-  User, 
   Clock, 
   DollarSign, 
   CheckCircle, 
-  AlertCircle, 
+  AlertCircle,
+  User,
   Eye,
-  MessageSquare,
-  Phone,
-  Mail
+  FileText,
+  Receipt,
+  ArrowRight,
+  Search,
+  Filter,
+  Calendar,
+  TrendingUp
 } from 'lucide-react'
 
 interface ContractorData {
   id: string
   name: string
   role: string
-  email: string
-  phone?: string
-  status: 'active' | 'inactive' | 'pending'
-  hourlyRate: number
+  status: 'timesheet_pending' | 'expense_pending' | 'both_pending' | 'up_to_date'
   totalHours: number
-  totalAmount: number
-  lastActive: string
-  projects: string[]
+  yourHours: number
+  otherHours: number
+  pendingExpenses: number
   employeeId: string
+  hourlyRate: number
+  lastSubmission: string
+  weekStart: string
+  weekEnd: string
+  timesheetCount: number
+  expenseCount: number
 }
 
-export default function ManagerContractorsPage() {
+interface ContractorStats {
+  totalContractors: number
+  pendingTimesheets: number
+  pendingExpenses: number
+  totalAmount: number
+  totalHours: number
+}
+
+export default function ContractorsPage() {
   const router = useRouter()
   const { appUser } = useAuth()
   const [contractors, setContractors] = useState<ContractorData[]>([])
+  const [stats, setStats] = useState<ContractorStats>({
+    totalContractors: 0,
+    pendingTimesheets: 0,
+    pendingExpenses: 0,
+    totalAmount: 0,
+    totalHours: 0
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
+    loadContractorData()
+  }, [])
+
+  const loadContractorData = async () => {
     // Simulate loading contractor data
     setTimeout(() => {
       const mockContractors: ContractorData[] = [
@@ -46,311 +73,398 @@ export default function ManagerContractorsPage() {
           id: '1',
           name: 'Mike Chen',
           role: 'Tech Infrastructure',
-          email: 'mike.chen@techcorp.com',
-          phone: '+1 (555) 123-4567',
-          status: 'active',
+          status: 'timesheet_pending',
+          totalHours: 40.0,
+          yourHours: 26.0,
+          otherHours: 14.0,
+          pendingExpenses: 0,
+          employeeId: 'emp1',
           hourlyRate: 95,
-          totalHours: 156.5,
-          totalAmount: 14867.50,
-          lastActive: '2025-01-19',
-          projects: ['ABC Corp - Tech Infrastructure', 'ABC Corp - System Maintenance'],
-          employeeId: 'emp1'
+          lastSubmission: '2025-01-17',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 1,
+          expenseCount: 0
         },
         {
           id: '2',
           name: 'Sarah Johnson',
           role: 'Software Development',
-          email: 'sarah.johnson@devcorp.com',
-          phone: '+1 (555) 234-5678',
-          status: 'active',
+          status: 'both_pending',
+          totalHours: 37.5,
+          yourHours: 37.5,
+          otherHours: 0.0,
+          pendingExpenses: 245.80,
+          employeeId: 'emp2',
           hourlyRate: 110,
-          totalHours: 142.0,
-          totalAmount: 15620.00,
-          lastActive: '2025-01-19',
-          projects: ['ABC Corp - Software Development', 'ABC Corp - API Integration'],
-          employeeId: 'emp2'
+          lastSubmission: '2025-01-17',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 1,
+          expenseCount: 2
         },
         {
           id: '3',
           name: 'David Kim',
           role: 'Data Analysis',
-          email: 'david.kim@datacorp.com',
-          phone: '+1 (555) 345-6789',
-          status: 'active',
+          status: 'expense_pending',
+          totalHours: 35.0,
+          yourHours: 22.0,
+          otherHours: 13.0,
+          pendingExpenses: 156.30,
+          employeeId: 'emp3',
           hourlyRate: 85,
-          totalHours: 98.5,
-          totalAmount: 8372.50,
-          lastActive: '2025-01-18',
-          projects: ['ABC Corp - Data Analysis', 'ABC Corp - Reporting System'],
-          employeeId: 'emp3'
+          lastSubmission: '2025-01-16',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 0,
+          expenseCount: 1
         },
         {
           id: '4',
           name: 'Lisa Wang',
           role: 'Project Management',
-          email: 'lisa.wang@pmcorp.com',
-          phone: '+1 (555) 456-7890',
-          status: 'active',
+          status: 'up_to_date',
+          totalHours: 40.0,
+          yourHours: 40.0,
+          otherHours: 0.0,
+          pendingExpenses: 0,
+          employeeId: 'emp4',
           hourlyRate: 120,
-          totalHours: 168.0,
-          totalAmount: 20160.00,
-          lastActive: '2025-01-19',
-          projects: ['ABC Corp - Project Management', 'ABC Corp - Client Coordination'],
-          employeeId: 'emp4'
+          lastSubmission: '2025-01-15',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 0,
+          expenseCount: 0
+        },
+        {
+          id: '5',
+          name: 'Alex Rodriguez',
+          role: 'UX Design',
+          status: 'timesheet_pending',
+          totalHours: 38.0,
+          yourHours: 38.0,
+          otherHours: 0.0,
+          pendingExpenses: 0,
+          employeeId: 'emp5',
+          hourlyRate: 90,
+          lastSubmission: '2025-01-17',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 1,
+          expenseCount: 0
+        },
+        {
+          id: '6',
+          name: 'Emily Chen',
+          role: 'Quality Assurance',
+          status: 'both_pending',
+          totalHours: 36.5,
+          yourHours: 36.5,
+          otherHours: 0.0,
+          pendingExpenses: 89.99,
+          employeeId: 'emp6',
+          hourlyRate: 75,
+          lastSubmission: '2025-01-17',
+          weekStart: '2025-01-13',
+          weekEnd: '2025-01-19',
+          timesheetCount: 1,
+          expenseCount: 1
         }
       ]
+
+      const mockStats: ContractorStats = {
+        totalContractors: mockContractors.length,
+        pendingTimesheets: mockContractors.filter(c => c.status === 'timesheet_pending' || c.status === 'both_pending').length,
+        pendingExpenses: mockContractors.filter(c => c.status === 'expense_pending' || c.status === 'both_pending').length,
+        totalAmount: mockContractors.reduce((sum, c) => sum + c.pendingExpenses, 0),
+        totalHours: mockContractors.reduce((sum, c) => sum + c.yourHours, 0)
+      }
+
       setContractors(mockContractors)
+      setStats(mockStats)
       setIsLoading(false)
     }, 1000)
-  }, [])
-
-  const handleViewDetails = (contractor: ContractorData) => {
-    router.push(`/manager/contractors/${contractor.employeeId}`)
   }
 
-  const handleContact = (contractor: ContractorData, method: 'email' | 'phone') => {
-    if (method === 'email') {
-      window.open(`mailto:${contractor.email}`)
-    } else if (method === 'phone' && contractor.phone) {
-      window.open(`tel:${contractor.phone}`)
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'timesheet_pending':
+        return <Clock className="w-4 h-4 text-orange-500" />
+      case 'expense_pending':
+        return <DollarSign className="w-4 h-4 text-blue-500" />
+      case 'both_pending':
+        return <AlertCircle className="w-4 h-4 text-red-500" />
+      case 'up_to_date':
+        return <CheckCircle className="w-4 h-4 text-green-500" />
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'timesheet_pending':
+        return 'Timesheet Pending'
+      case 'expense_pending':
+        return 'Expense Pending'
+      case 'both_pending':
+        return 'Both Pending'
+      case 'up_to_date':
+        return 'Up to Date'
+      default:
+        return 'Unknown'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'timesheet_pending':
+        return 'bg-orange-100 text-orange-800'
+      case 'expense_pending':
+        return 'bg-blue-100 text-blue-800'
+      case 'both_pending':
+        return 'bg-red-100 text-red-800'
+      case 'up_to_date':
         return 'bg-green-100 text-green-800'
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="w-4 h-4 text-green-500" />
-      case 'inactive':
-        return <AlertCircle className="w-4 h-4 text-gray-500" />
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />
-      default:
-        return <AlertCircle className="w-4 h-4 text-gray-500" />
+  const handleContractorAction = (contractor: ContractorData, action: string) => {
+    if (action === 'timesheet' || action === 'both') {
+      router.push(`/manager/approvals?employee=${contractor.employeeId}&type=timesheet`)
+    } else if (action === 'expense') {
+      router.push(`/manager/approvals?employee=${contractor.employeeId}&type=expense`)
+    } else if (action === 'details') {
+      router.push(`/manager/contractors/${contractor.employeeId}`)
     }
   }
 
-  const filteredContractors = contractors.filter(contractor =>
-    contractor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contractor.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contractor.email.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredContractors = contractors.filter(contractor => {
+    const matchesSearch = contractor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contractor.role.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || contractor.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    })
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e31c79] mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading Contractors...</p>
+          <p className="mt-2 text-gray-600">Loading Contractor List...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#05202E] mb-2">My Contractors</h1>
-        <p className="text-gray-600">
-          Manage and view all contractors assigned to your projects.
-        </p>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-[#e31c79] bg-opacity-10 rounded-lg">
-              <Users className="w-6 h-6 text-[#e31c79]" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Contractors</p>
-              <p className="text-2xl font-bold text-[#05202E]">{contractors.length}</p>
-            </div>
+    <div className="space-y-6">
+      {/* Header - EXACTLY matching Admin Dashboard */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Your Contractor Team
+            </h1>
+            <p className="text-gray-600 mt-1">
+              ABC Corporation - External Approver
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage and approve your assigned contractors
+            </p>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-[#05202E]">
-                {contractors.filter(c => c.status === 'active').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Clock className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Hours</p>
-              <p className="text-2xl font-bold text-[#05202E]">
-                {contractors.reduce((sum, c) => sum + c.totalHours, 0).toFixed(1)}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Amount</p>
-              <p className="text-2xl font-bold text-[#05202E]">
-                ${contractors.reduce((sum, c) => sum + c.totalAmount, 0).toLocaleString()}
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Manager ID</p>
+            <p className="font-mono text-gray-900">{appUser?.id}</p>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="flex items-center space-x-4">
+      {/* Statistics Cards - EXACTLY matching Admin Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="p-6 rounded-lg border bg-pink-50 text-pink-700 border-pink-200">
+          <h3 className="text-sm font-medium opacity-75">Total Contractors</h3>
+          <p className="text-2xl font-bold mt-1">{stats.totalContractors}</p>
+          <p className="text-sm opacity-75 mt-1">Assigned to you</p>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-[#05202E]/10 text-[#05202E] border-[#05202E]/20">
+          <h3 className="text-sm font-medium opacity-75">Pending Timesheets</h3>
+          <p className="text-2xl font-bold mt-1">{stats.pendingTimesheets}</p>
+          <p className="text-sm opacity-75 mt-1">Awaiting review</p>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-[#E5DDD8]/50 text-[#05202E] border-[#E5DDD8]">
+          <h3 className="text-sm font-medium opacity-75">Pending Expenses</h3>
+          <p className="text-2xl font-bold mt-1">{stats.pendingExpenses}</p>
+          <p className="text-sm opacity-75 mt-1">Awaiting approval</p>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-blue-50 text-blue-700 border-blue-200">
+          <h3 className="text-sm font-medium opacity-75">Total Amount</h3>
+          <p className="text-2xl font-bold mt-1">${stats.totalAmount.toLocaleString()}</p>
+          <p className="text-sm opacity-75 mt-1">Pending approval</p>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-green-50 text-green-700 border-green-200">
+          <h3 className="text-sm font-medium opacity-75">Total Hours</h3>
+          <p className="text-2xl font-bold mt-1">{stats.totalHours}</p>
+          <p className="text-sm opacity-75 mt-1">This week</p>
+        </div>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search contractors by name, role, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e31c79] focus:border-transparent"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search contractors by name or role..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#e31c79] focus:border-transparent"
+              />
+            </div>
           </div>
-          <div className="text-sm text-gray-600">
-            Showing {filteredContractors.length} of {contractors.length} contractors
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#e31c79] focus:border-transparent"
+            >
+              <option value="all">All Statuses</option>
+              <option value="timesheet_pending">Timesheet Pending</option>
+              <option value="expense_pending">Expense Pending</option>
+              <option value="both_pending">Both Pending</option>
+              <option value="up_to_date">Up to Date</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Contractors List */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-[#05202E]">Contractor Directory</h2>
+      {/* Contractor List - EXACTLY matching Admin Dashboard style */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <Users className="w-5 h-5 mr-2 text-[#e31c79]" />
+            Contractor Overview
+          </h2>
+          <div className="text-sm text-gray-500">
+            Week of {formatDate(contractors[0]?.weekStart)} - {formatDate(contractors[0]?.weekEnd)}
+          </div>
         </div>
-        
+
         {filteredContractors.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="space-y-4">
             {filteredContractors.map((contractor) => (
-              <div key={contractor.id} className="px-6 py-4 hover:bg-gray-50">
+              <div key={contractor.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-[#e31c79] bg-opacity-10 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-[#e31c79]" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-medium text-[#05202E]">{contractor.name}</h3>
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(contractor.status)}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contractor.status)}`}>
-                              {contractor.status.charAt(0).toUpperCase() + contractor.status.slice(1)}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Role:</span> {contractor.role}
-                            </p>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Rate:</span> ${contractor.hourlyRate}/hr
-                            </p>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Total Hours:</span> {contractor.totalHours} hrs
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Total Amount:</span> ${contractor.totalAmount.toLocaleString()}
-                            </p>
-                          </div>
-                          
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Email:</span> {contractor.email}
-                            </p>
-                            {contractor.phone && (
-                              <p className="text-sm text-gray-600 mb-1">
-                                <span className="font-medium">Phone:</span> {contractor.phone}
-                              </p>
-                            )}
-                            <p className="text-sm text-gray-600 mb-1">
-                              <span className="font-medium">Last Active:</span> {new Date(contractor.lastActive).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Projects:</span> {contractor.projects.length}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {contractor.projects.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Current Projects:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {contractor.projects.map((project, index) => (
-                                <span 
-                                  key={index}
-                                  className="px-2 py-1 bg-[#e31c79] bg-opacity-10 text-[#e31c79] text-xs rounded-full"
-                                >
-                                  {project}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-[#e31c79] bg-opacity-10 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-[#e31c79]" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{contractor.name}</h3>
+                      <p className="text-sm text-gray-600">Employee ID: {contractor.employeeId}</p>
+                      <p className="text-sm text-gray-600">{contractor.role}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Last submission: {formatDate(contractor.lastSubmission)}
+                      </p>
                     </div>
                   </div>
                   
-                  <div className="flex flex-col space-y-2 ml-6">
-                    <button
-                      onClick={() => handleViewDetails(contractor)}
-                      className="bg-[#e31c79] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#c41a6b] transition-colors flex items-center space-x-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>View Details</span>
-                    </button>
+                  <div className="flex items-center space-x-6">
+                    <div className="text-center">
+                      <div className="flex items-center space-x-2 mb-2">
+                        {getStatusIcon(contractor.status)}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(contractor.status)}`}>
+                          {getStatusText(contractor.status)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {contractor.totalHours} hrs this week
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Your Hours: {contractor.yourHours} hrs | Other: {contractor.otherHours} hrs
+                      </p>
+                      {contractor.pendingExpenses > 0 && (
+                        <p className="text-sm text-blue-600 font-medium">
+                          Expenses: ${contractor.pendingExpenses.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
                     
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleContact(contractor, 'email')}
-                        className="bg-[#05202E] text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-[#0a2f3f] transition-colors flex items-center space-x-1"
-                      >
-                        <Mail className="w-4 h-4" />
-                        <span>Email</span>
-                      </button>
-                      
-                      {contractor.phone && (
-                        <button
-                          onClick={() => handleContact(contractor, 'phone')}
-                          className="bg-[#E5DDD8] text-[#05202E] px-3 py-2 rounded-md text-sm font-medium hover:bg-[#d4cac3] transition-colors flex items-center space-x-1"
+                    <div className="flex flex-col space-y-2">
+                      {contractor.status === 'timesheet_pending' || contractor.status === 'both_pending' ? (
+                        <button 
+                          onClick={() => handleContractorAction(contractor, 'timesheet')}
+                          className="bg-[#e31c79] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#c41a6b] transition-colors flex items-center"
                         >
-                          <Phone className="w-4 h-4" />
-                          <span>Call</span>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Review Timesheet
+                        </button>
+                      ) : null}
+                      {contractor.status === 'expense_pending' || contractor.status === 'both_pending' ? (
+                        <button 
+                          onClick={() => handleContractorAction(contractor, 'expense')}
+                          className="bg-[#05202E] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0a2f3f] transition-colors flex items-center"
+                        >
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Review Expenses
+                        </button>
+                      ) : null}
+                      {contractor.status === 'both_pending' && (
+                        <button 
+                          onClick={() => handleContractorAction(contractor, 'both')}
+                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors flex items-center"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Review All
                         </button>
                       )}
+                      <button 
+                        onClick={() => handleContractorAction(contractor, 'details')}
+                        className="bg-[#E5DDD8] text-[#05202E] px-4 py-2 rounded-md text-sm font-medium hover:bg-[#d4cac3] transition-colors flex items-center"
+                      >
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Stats Row */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                      <p className="text-sm text-gray-500">Hourly Rate</p>
+                      <p className="font-semibold text-gray-900">${contractor.hourlyRate}/hr</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Pending Timesheets</p>
+                      <p className="font-semibold text-orange-600">{contractor.timesheetCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Pending Expenses</p>
+                      <p className="font-semibold text-blue-600">{contractor.expenseCount}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Weekly Value</p>
+                      <p className="font-semibold text-green-600">${(contractor.yourHours * contractor.hourlyRate).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -358,14 +472,10 @@ export default function ManagerContractorsPage() {
             ))}
           </div>
         ) : (
-          <div className="px-6 py-12 text-center">
-            <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500 text-lg">
-              {searchTerm ? 'No contractors found matching your search' : 'No contractors available'}
-            </p>
-            <p className="text-gray-400 text-sm">
-              {searchTerm ? 'Try adjusting your search terms' : 'Contact your administrator to add contractors'}
-            </p>
+          <div className="text-center py-12 text-gray-500">
+            <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No contractors found</p>
+            <p className="text-sm">Try adjusting your search or filter criteria</p>
           </div>
         )}
       </div>

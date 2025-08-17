@@ -16,7 +16,13 @@ import {
   MessageSquare,
   BarChart3,
   ArrowRight,
-  User
+  User,
+  Building2,
+  Receipt,
+  TrendingUp,
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react'
 
 interface ContractorData {
@@ -41,7 +47,7 @@ interface ManagerStats {
 
 export default function ManagerDashboardPage() {
   const router = useRouter()
-  const { appUser } = useAuth()
+  const { appUser, signOut } = useAuth()
   const [contractors, setContractors] = useState<ContractorData[]>([])
   const [stats, setStats] = useState<ManagerStats>({
     pendingTimesheets: 0,
@@ -50,6 +56,7 @@ export default function ManagerDashboardPage() {
     totalContractors: 0
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     // Simulate loading manager data
@@ -209,7 +216,7 @@ export default function ManagerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header - EXACTLY matching Employee Dashboard */}
+      {/* Header - EXACTLY matching Admin Dashboard */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -217,7 +224,7 @@ export default function ManagerDashboardPage() {
               Welcome back, {appUser?.first_name}!
             </h1>
             <p className="text-gray-600 mt-1">
-              Client Manager • External Approver
+              ABC Corporation - External Approver
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Manager
@@ -230,7 +237,7 @@ export default function ManagerDashboardPage() {
         </div>
       </div>
 
-      {/* Statistics Cards - EXACTLY matching Employee Dashboard */}
+      {/* Statistics Cards - EXACTLY matching Admin Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div 
           className="p-6 rounded-lg border bg-pink-50 text-pink-700 border-pink-200 cursor-pointer hover:shadow-md transition-shadow"
@@ -256,7 +263,7 @@ export default function ManagerDashboardPage() {
         >
           <h3 className="text-sm font-medium opacity-75">Total Amount</h3>
           <p className="text-2xl font-bold mt-1">${stats.totalAmount.toLocaleString()}</p>
-          <p className="text-sm opacity-75 mt-1">This week</p>
+          <p className="text-sm opacity-75 mt-1">Pending approval</p>
         </div>
 
         <div 
@@ -265,11 +272,11 @@ export default function ManagerDashboardPage() {
         >
           <h3 className="text-sm font-medium opacity-75">Your Contractors</h3>
           <p className="text-2xl font-bold mt-1">{stats.totalContractors}</p>
-          <p className="text-sm opacity-75 mt-1">Currently assigned</p>
+          <p className="text-sm opacity-75 mt-1">Assigned team</p>
         </div>
       </div>
 
-      {/* Quick Actions - EXACTLY matching Employee Dashboard */}
+      {/* Quick Actions - EXACTLY matching Admin Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div 
           className="block p-6 rounded-lg border bg-pink-50 border-pink-200 hover:bg-pink-100 text-pink-700 transition-all hover:shadow-md cursor-pointer"
@@ -282,7 +289,7 @@ export default function ManagerDashboardPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Review Timesheets</h3>
-                <p className="text-sm opacity-75">Approve weekly timesheets</p>
+                <p className="text-sm opacity-75">Approve weekly submissions</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 opacity-75" />
@@ -300,7 +307,7 @@ export default function ManagerDashboardPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Review Expenses</h3>
-                <p className="text-sm opacity-75">Approve business expenses</p>
+                <p className="text-sm opacity-75">Approve expense reports</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 opacity-75" />
@@ -318,7 +325,7 @@ export default function ManagerDashboardPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Generate Reports</h3>
-                <p className="text-sm opacity-75">Create approval reports</p>
+                <p className="text-sm opacity-75">Create detailed reports</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 opacity-75" />
@@ -336,7 +343,7 @@ export default function ManagerDashboardPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Contractor List</h3>
-                <p className="text-sm opacity-75">Manage your contractors</p>
+                <p className="text-sm opacity-75">Manage your team</p>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 opacity-75" />
@@ -344,18 +351,18 @@ export default function ManagerDashboardPage() {
         </div>
       </div>
 
-      {/* Contractor List - EXACTLY matching Employee Dashboard style */}
+      {/* Contractor List - EXACTLY matching Admin Dashboard style */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Contractors - Pending Approvals</h2>
         <div className="space-y-4">
           {contractors.map((contractor) => (
-            <div key={contractor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={contractor.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-[#e31c79] bg-opacity-10 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-[#e31c79]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">{contractor.name}</h3>
+                  <h3 className="font-medium text-gray-900">{contractor.name}</h3>
                   <p className="text-sm text-gray-600">Employee ID: {contractor.employeeId}</p>
                   <p className="text-sm text-gray-600">{contractor.role}</p>
                 </div>
